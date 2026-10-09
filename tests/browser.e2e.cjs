@@ -63,12 +63,35 @@ async function main() {
     browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
     const page = await context.newPage();
-    page.on("pageerror", error => errors.push(error.message));
+    page.on("pageerror", error => errors.push("pageerror: " + error.message));
+    page.on("console", message => {
+      if (message.type() === "error") errors.push("console: " + message.text());
+    });
+    page.on("requestfailed", request => {
+      errors.push("requestfailed: " + request.url() + " — " + (request.failure()?.errorText || "unknown error"));
+    });
 
     const response = await page.goto(origin, { waitUntil: "load", timeout: 20000 });
     assert.equal(response.status(), 200, "The built application should load over HTTP.");
     assert.equal(await page.title(), "Code Forge — Browser Editor");
-    await page.locator("#editorHost .cm-editor").waitFor({ state: "visible", timeout: 15000 });
+    try {
+      await page.locator("#editorHost .cm-editor").waitFor({ state: "visible", timeout: 15000 });
+    } catch (error) {
+      const diagnostics = await page.evaluate(() => ({
+        readyState: document.readyState,
+        scriptState: [...document.scripts].map(script => ({
+          src: script.getAttribute("src"),
+          loaded: [...performance.getEntriesByType("resource")].some(entry => entry.name === script.src && entry.responseEnd > 0)
+        })),
+        coreAvailable: typeof window.CodeForgeCore,
+        editorEngineAvailable: typeof window.CodeForgeEditorEngine,
+        editorViewAvailable: typeof window.CodeForgeEditorEngine?.EditorView,
+        editorHost: document.querySelector("#editorHost")?.innerHTML.slice(0, 500),
+        appShellText: document.body.innerText.slice(0, 500)
+      }));
+      throw new Error("CodeMirror did not initialize. Browser diagnostics: " +
+        JSON.stringify({ diagnostics, errors }) + ". Original wait error: " + error.message);
+    }
     await page.locator("#editorHost .cm-content[contenteditable=\"true\"]").waitFor({ state: "visible" });
     console.log("PASS: built app and CodeMirror editor initialize");
 
