@@ -24,7 +24,7 @@
       <button class="button button-primary" id="run" type="button">Run <small>Ctrl ↵</small></button>
     </div>
   </header>
-  <div class="viewbar">
+  <div class="viewbar" role="toolbar" aria-label="Workspace layout controls">
     <div class="viewbar-caption"><span class="status-dot"></span> Workspace</div>
     <div class="viewbar-controls">
       <div class="layout-switch" role="group" aria-label="Workspace layout">
@@ -36,6 +36,7 @@
     </div>
   </div>
   <main>
+    <h1 class="sr-only">Code Forge workspace</h1>
     <div class="ide-layout" id="ideLayout"><nav class="activity-rail" aria-label="Workspace tools"><button class="rail-button is-active" type="button" data-view="explorer" aria-label="Explorer" title="Explorer">▤</button><button class="rail-button" type="button" data-view="search" aria-label="Search files" title="Search files">⌕</button><button class="rail-button" type="button" data-view="settings" aria-label="Workspace settings" title="Workspace settings">⚙</button></nav><aside class="side-panel" id="sidePanel" aria-label="Workspace explorer"><div class="side-panel-heading"><span id="sidePanelTitle">EXPLORER</span><div class="side-actions"><button class="icon-button" id="newFile" type="button" title="New file" aria-label="New file">＋</button><button class="icon-button" id="collapseExplorer" type="button" title="Collapse explorer" aria-label="Collapse explorer">‹</button></div></div><div id="sidePanelBody" class="side-panel-body"></div><div class="workspace-note">BROWSER-LOCAL WORKSPACE</div></aside><div class="workspace layout-split" id="workspace">
       <section class="pane editor-pane" aria-label="Code editor">
         <div class="pane-heading">
@@ -50,7 +51,7 @@
           <span class="button-group"><button class="button button-quiet" id="trim" type="button" title="Remove trailing whitespace">Trim</button><button class="button button-quiet" id="clear" type="button">Clear file</button></span>
         </div>
       </section>
-      <div class="resize-handle" id="resizeHandle" role="separator" tabindex="0" aria-label="Resize editor and preview" aria-orientation="vertical"></div>
+      <div class="resize-handle" id="resizeHandle" role="separator" tabindex="0" aria-label="Resize editor and preview" aria-orientation="vertical" aria-valuemin="25" aria-valuemax="75" aria-valuenow="50"></div>
       <section class="pane preview-pane" aria-label="Live preview">
         <div class="pane-heading preview-heading">
           <div class="pane-title"><span class="pane-symbol" aria-hidden="true">◧</span> Preview</div>
@@ -65,7 +66,7 @@
         <div class="console-title"><span class="pane-symbol" aria-hidden="true">&gt;_</span> Console <span class="console-count" id="consoleCount">0 entries</span></div>
         <button class="button button-quiet" id="clearConsole" type="button">Clear console</button>
       </div>
-      <div class="console-output" id="consoleOutput" aria-live="polite" aria-relevant="additions text"><div class="console-empty" id="consoleEmpty">Console output and runtime errors will appear here.</div></div>
+      <div class="console-output" id="consoleOutput" role="tabpanel" tabindex="0" aria-labelledby="panel-tab-console" aria-live="polite" aria-relevant="additions text"><div class="console-empty" id="consoleEmpty">Console output and runtime errors will appear here.</div></div>
     </section>
   </main>
   <footer class="statusbar">

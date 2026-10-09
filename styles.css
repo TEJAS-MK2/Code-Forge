@@ -8,7 +8,7 @@
   --line-strong: #485046;
   --ink: #e8ebe4;
   --muted: #a0a99b;
-  --subtle: #778071;
+  --subtle: #9aa394;
   --accent: #b8e986;
   --accent-ink: #182012;
   --danger: #f3a6a0;
@@ -84,7 +84,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .preview-heading .pane-title { color: #30352e; }
 .preview-heading .pane-symbol { border-color: #d3d7cd; color: #626b5e; }
 .preview-heading .pane-meta { color: #697064; }
-.preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-bottom: 1px solid #dcded6; background: #e9ebe4; color: #6b7167; font-size: 10px; }
+.preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-bottom: 1px solid #dcded6; background: #e9ebe4; color: #454b41; font-size: 10px; }
 .preview-toolbar .button { min-height: 26px; padding: 4px 7px; border-color: #d0d4ca; background: #f8f9f5; color: #30352e; font-size: 10px; }
 .preview-frame { display: block; flex: 1; width: 100%; min-height: 260px; border: 0; background: #fff; }
 .console { display: flex; flex-direction: column; margin: 0 14px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
@@ -234,7 +234,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 @media(max-width:760px){.tree-file-action{opacity:1}}
 
 /* Preview viewport presets and cross-workspace replace controls. */
-.preview-device-label{align-self:center;color:#697064;font-size:10px}
+.preview-device-label{align-self:center;color:#454b41;font-size:10px}
 .preview-device{max-width:150px;min-height:26px;padding:4px 6px;border:1px solid #d0d4ca;border-radius:4px;background:#f8f9f5;color:#30352e;font-size:10px}
 .preview-frame{max-width:100%;margin-inline:auto;transition:width .16s ease}
 .preview-frame-device{border-left:1px solid #d5d9cf;border-right:1px solid #d5d9cf;box-shadow:0 0 0 1px #e1e4dc}
@@ -264,3 +264,5 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .command-actions{display:flex;justify-content:flex-end;gap:8px;padding:8px;border-top:1px solid var(--line)}
 .command-actions .command-option{width:auto;min-width:90px;justify-content:center}
 .command-input[aria-invalid="true"]{box-shadow:inset 0 0 0 1px #d77d70}
+
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}

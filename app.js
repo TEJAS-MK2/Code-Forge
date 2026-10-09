@@ -438,7 +438,7 @@
   document.querySelectorAll(".rail-button").forEach(function(button){button.addEventListener("click",function(){switchSideView(button.dataset.view);});});
   document.getElementById("newFile").addEventListener("click",newFile);
   document.getElementById("collapseExplorer").addEventListener("click",function(){sidePanel.classList.toggle("is-collapsed");});
-  var engineExtensions=[Engine.basicSetup,Engine.theme,languageCompartment.of(languageExtension(activeFile)),wrappingCompartment.of(Engine.lineWrapping),indentCompartment.of(Engine.indentUnit.of("  ")),Engine.EditorView.updateListener.of(function(update){if(update.docChanged&&!switchingFile)emit("input");if(update.selectionSet||update.docChanged)emit("select");})];
+  var engineExtensions=[Engine.basicSetup,Engine.syntaxHighlighting(Engine.syntax),Engine.theme,languageCompartment.of(languageExtension(activeFile)),wrappingCompartment.of(Engine.lineWrapping),indentCompartment.of(Engine.indentUnit.of("  ")),Engine.EditorView.updateListener.of(function(update){if(update.docChanged&&!switchingFile)emit("input");if(update.selectionSet||update.docChanged)emit("select");})];
   try{
     var savedFontSize=Number(localStorage.getItem("code-forge-font-size")||12);
     if([11,12,13,14,16,18].includes(savedFontSize))editorHost.style.setProperty("--cf-editor-font-size",savedFontSize+"px");
@@ -446,6 +446,7 @@
     engineExtensions[3]=wrappingCompartment.of(savedWrap?Engine.EditorView.lineWrapping:[]);
   }catch(e){}
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
+  editor.setAttribute("aria-label","Code editor content");
   editorHost.addEventListener("keydown",function(event){emit("keydown",event);});
   setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
@@ -574,10 +575,11 @@
     var opened=window.open(url,"_blank");if(!opened){URL.revokeObjectURL(url);say("Pop-up blocked. Download the HTML file instead.");}else{try{opened.opener=null;}catch(e){}setTimeout(function(){URL.revokeObjectURL(url);},60000);}
   });
   document.getElementById("clearConsole").addEventListener("click",clearConsole);
-  document.querySelector(".console-heading").insertAdjacentHTML("afterbegin",'<div class="panel-tabs" role="tablist" aria-label="Output panels"><button type="button" class="panel-tab is-active" data-panel="console">Console</button><button type="button" class="panel-tab" data-panel="output">Output</button><button type="button" class="panel-tab" data-panel="problems">Problems</button></div>');
+  document.querySelector(".console-heading").insertAdjacentHTML("afterbegin",'<div class="panel-tabs" role="tablist" aria-label="Output panels"><button id="panel-tab-console" type="button" role="tab" aria-selected="true" aria-controls="consoleOutput" tabindex="0" class="panel-tab is-active" data-panel="console">Console</button><button id="panel-tab-output" type="button" role="tab" aria-selected="false" aria-controls="consoleOutput" tabindex="-1" class="panel-tab" data-panel="output">Output</button><button id="panel-tab-problems" type="button" role="tab" aria-selected="false" aria-controls="consoleOutput" tabindex="-1" class="panel-tab" data-panel="problems">Problems</button></div>');
   document.querySelector(".console-heading").insertAdjacentHTML("beforeend",'<div class="console-filters" role="group" aria-label="Console filter"><button type="button" class="console-filter is-active" data-console-filter="all" aria-pressed="true">All</button><button type="button" class="console-filter" data-console-filter="errors" aria-pressed="false">Errors</button></div>');
   document.querySelectorAll(".console-filter").forEach(function(button){button.addEventListener("click",function(){consoleFilter=button.dataset.consoleFilter;document.querySelectorAll(".console-filter").forEach(function(item){var active=item===button;item.classList.toggle("is-active",active);item.setAttribute("aria-pressed",String(active));});if(panelMode==="console")renderConsoleHistory();});});
-  document.querySelectorAll(".panel-tab").forEach(function(b){b.addEventListener("click",function(){panelMode=b.dataset.panel;document.querySelectorAll(".panel-tab").forEach(function(x){x.classList.toggle("is-active",x===b);});renderBottomPanel();});});
+  document.querySelectorAll(".panel-tab").forEach(function(b){b.addEventListener("click",function(){panelMode=b.dataset.panel;document.querySelectorAll(".panel-tab").forEach(function(x){var active=x===b;x.classList.toggle("is-active",active);x.setAttribute("aria-selected",String(active));x.tabIndex=active?0:-1;});consoleOutput.setAttribute("aria-labelledby",b.id);renderBottomPanel();});});
+  document.querySelector(".panel-tabs").addEventListener("keydown",function(event){if(event.key!=="ArrowLeft"&&event.key!=="ArrowRight")return;event.preventDefault();var tabs=Array.from(document.querySelectorAll(".panel-tab")),index=tabs.indexOf(document.activeElement);if(index<0)index=0;index=(index+(event.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;tabs[index].focus();tabs[index].click();});
   window.addEventListener("message",function(event){
     if(event.source!==frame.contentWindow||!event.data||event.data.__codeForge!==currentChannel)return;
     var level=String(event.data.level||"log");addConsoleLine(level,String(event.data.message||""));
@@ -586,8 +588,8 @@
   });
   window.addEventListener("beforeunload",function(){clearTimeout(saveTimer);rememberEditor();try{Core.writeWorkspace(localStorage,files);}catch(e){}});
   var resizing=false,resizeRatio=.5,handle=document.getElementById("resizeHandle");
-  function resizeAt(clientX){var rect=workspace.getBoundingClientRect(),ratio=(clientX-rect.left)/rect.width;ratio=Math.max(.25,Math.min(.75,ratio));resizeRatio=ratio;workspace.style.gridTemplateColumns="minmax(0,"+(ratio*100)+"fr) 8px minmax(0,"+((1-ratio)*100)+"fr)";}
-  handle.addEventListener("pointerdown",function(event){if(matchMedia("(max-width: 760px)").matches)return;resizing=true;var rect=workspace.getBoundingClientRect();resizeRatio=(event.clientX-rect.left)/rect.width;handle.setPointerCapture(event.pointerId);event.preventDefault();});
+  function resizeAt(clientX){var rect=workspace.getBoundingClientRect(),ratio=(clientX-rect.left)/rect.width;ratio=Math.max(.25,Math.min(.75,ratio));resizeRatio=ratio;handle.setAttribute("aria-valuenow",String(Math.round(ratio*100)));workspace.style.gridTemplateColumns="minmax(0,"+(ratio*100)+"fr) 8px minmax(0,"+((1-ratio)*100)+"fr)";}
+  handle.addEventListener("pointerdown",function(event){if(matchMedia("(max-width: 760px)").matches)return;resizing=true;var rect=workspace.getBoundingClientRect();resizeRatio=(event.clientX-rect.left)/rect.width;handle.setAttribute("aria-valuenow",String(Math.round(Math.max(.25,Math.min(.75,resizeRatio))*100)));handle.setPointerCapture(event.pointerId);event.preventDefault();});
   handle.addEventListener("pointermove",function(event){if(resizing)resizeAt(event.clientX);});
   handle.addEventListener("pointerup",function(){resizing=false;});handle.addEventListener("pointercancel",function(){resizing=false;});
   handle.addEventListener("keydown",function(event){if(matchMedia("(max-width: 760px)").matches)return;if(event.key==="ArrowLeft"||event.key==="ArrowRight"){event.preventDefault();var rect=workspace.getBoundingClientRect();resizeAt(rect.left+rect.width*Math.max(.25,Math.min(.75,resizeRatio+(event.key==="ArrowLeft"?-.03:.03))));}});

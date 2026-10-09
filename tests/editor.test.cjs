@@ -410,3 +410,37 @@ test("failed quota save leaves the previous workspace recoverable", () => {
   assert.deepEqual({ ...Core.readWorkspace(storage.getItem("code-forge-workspace-v2")) }, original);
   assert.equal(changed["index.html"], "<h1>New unsaved work</h1>");
 });
+
+
+test("main workspace has a heading, toolbar landmark and accessible resize range", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(html, /<h1 class="sr-only">Code Forge workspace<\/h1>/);
+  assert.match(html, /role="toolbar" aria-label="Workspace layout controls"/);
+  assert.match(html, /aria-valuemin="25" aria-valuemax="75" aria-valuenow="50"/);
+  assert.match(app, /handle\.setAttribute\("aria-valuenow",String\(Math\.round\(ratio\*100\)\)\)/);
+  assert.match(css, /\.sr-only\{/);
+});
+
+test("editor content has an accessible name and output tabs implement ARIA tab semantics", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const editor = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(html, /role="tabpanel" tabindex="0" aria-labelledby="panel-tab-console"/);
+  assert.match(app, /editor\.setAttribute\("aria-label","Code editor content"\)/);
+  assert.match(app, /role="tab" aria-selected="true" aria-controls="consoleOutput"/);
+  assert.match(app, /x\.setAttribute\("aria-selected",String\(active\)\)/);
+  assert.match(app, /ArrowLeft.*ArrowRight/);
+  assert.match(editor, /HighlightStyle\.define/);
+});
+
+test("normal-text interface colors and editor syntax tokens use higher-contrast palette values", () => {
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  const editor = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(css, /--subtle: #9aa394/);
+  assert.match(css, /background: #e9ebe4; color: #454b41/);
+  assert.match(editor, /color: "#9aa593"/);
+  assert.match(editor, /color: "#c5f39f"/);
+  assert.match(editor, /color: "#a6d4ff"/);
+});
