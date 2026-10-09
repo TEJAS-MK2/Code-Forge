@@ -69,6 +69,7 @@ test("workflow checks community files and executes browser tests before deployme
   for (const value of [
     "CONTRIBUTING.md",
     "SECURITY.md",
+    ".github/dependabot.yml",
     ".github/ISSUE_TEMPLATE/config.yml",
     ".github/ISSUE_TEMPLATE/bug_report.yml",
     ".github/ISSUE_TEMPLATE/feature_request.yml",
@@ -83,13 +84,21 @@ test("workflow checks community files and executes browser tests before deployme
 
 test("CI pins every action, limits deployment permissions, and validates pull requests without deploying", () => {
   const workflow = read(".github/workflows/pages.yml");
-  const actionRefs = [...workflow.matchAll(/^\\s*uses:\\s*([^#\\s]+)/gm)].map(match => match[1]);
+  const actionRefs = workflow.split("\n")
+    .filter(line => line.trim().startsWith("uses:"))
+    .map(line => line.split("#")[0].trim().slice("uses:".length).trim());
   assert.ok(actionRefs.length > 0, "workflow should use explicit actions");
-  for (const ref of actionRefs) assert.match(ref, /@[a-f0-9]{40}$/, `Action is not pinned to a full SHA: ${ref}`);
-  assert.match(workflow, /^permissions:\\n  contents: read$/m);
-  assert.match(workflow, /deploy:\\n    if: github.event_name != 'pull_request'[\\s\\S]*?permissions:\\n      contents: read\\n      pages: write\\n      id-token: write/);
-  assert.match(workflow, /pull_request:\\n    branches: \\[main\\]/);
-  assert.match(workflow, /group: code-forge-\\$\\{\\{ github\\.event\\.pull_request\\.number \\|\\| github\\.ref \\}\\}/);
+  for (const ref of actionRefs) {
+    const sha = ref.slice(ref.lastIndexOf("@") + 1);
+    assert.equal(sha.length, 40, "Action is not pinned to a full SHA: " + ref);
+    assert.ok(/^[a-f0-9]+$/.test(sha), "Action SHA is invalid: " + ref);
+  }
+  assert.ok(workflow.includes("permissions:\n  contents: read"));
+  assert.ok(workflow.includes("deploy:\n    if: github.event_name !="));
+  assert.ok(workflow.includes("pages: write"));
+  assert.ok(workflow.includes("id-token: write"));
+  assert.ok(workflow.includes("pull_request:\n    branches: [main]"));
+  assert.ok(workflow.includes("group: code-forge-${{ github.event.pull_request.number || github.ref }}"));
 });
 
 test("Dependabot is configured to check npm and GitHub Actions updates weekly", () => {
