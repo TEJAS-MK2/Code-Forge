@@ -97,26 +97,22 @@
   function rememberEditor() { if (activeFile && files[activeFile] != null) files[activeFile] = editor.value; }
   function persist(showError) {
     rememberEditor();
-    try {
-      localStorage.setItem("code-forge-workspace-v2", JSON.stringify({format:"code-forge-workspace",version:2,files:files}));
-      localStorage.setItem("code-forge-project-v1", JSON.stringify({html:files["index.html"],css:files["styles.css"],js:files["app.js"]}));
-      saveState("Saved on this device",true); return true;
-    } catch (e) {
-      saveState("Storage unavailable",false);
-      if (showError) say("Browser storage is unavailable. Export a backup to keep your work.");
-      return false;
-    }
+    var result;
+    try { result=Core.writeWorkspace(localStorage,files); }
+    catch(error) { result={saved:false,error:error}; }
+    if(result.saved){saveState("Saved on this device",true);return true;}
+    saveState("Storage unavailable",false);
+    if(showError)say("Browser storage is unavailable. Export a backup to keep your work.");
+    return false;
   }
   function persistSnapshot(showError) {
-    try {
-      localStorage.setItem("code-forge-workspace-v2", JSON.stringify({format:"code-forge-workspace",version:2,files:files}));
-      localStorage.setItem("code-forge-project-v1", JSON.stringify({html:files["index.html"],css:files["styles.css"],js:files["app.js"]}));
-      saveState("Saved on this device",true); return true;
-    } catch (e) {
-      saveState("Storage unavailable",false);
-      if (showError) say("Browser storage is full or unavailable. Export a backup before continuing.");
-      return false;
-    }
+    var result;
+    try { result=Core.writeWorkspace(localStorage,files); }
+    catch(error) { result={saved:false,error:error}; }
+    if(result.saved){saveState("Saved on this device",true);return true;}
+    saveState("Storage unavailable",false);
+    if(showError)say("Browser storage is full or unavailable. Export a backup before continuing.");
+    return false;
   }
   function updateCursor() {
     var doc=editorView.state.doc, pos=editorView.state.selection.main.head, line=doc.lineAt(pos);
@@ -588,7 +584,7 @@
     if(level==="error")document.getElementById("previewState").textContent="Runtime error";
     else if(level==="system")document.getElementById("previewState").textContent="Ready";
   });
-  window.addEventListener("beforeunload",function(){clearTimeout(saveTimer);rememberEditor();try{localStorage.setItem("code-forge-workspace-v2",JSON.stringify({format:"code-forge-workspace",version:2,files:files}));localStorage.setItem("code-forge-project-v1",JSON.stringify({html:files["index.html"],css:files["styles.css"],js:files["app.js"]}));}catch(e){}});
+  window.addEventListener("beforeunload",function(){clearTimeout(saveTimer);rememberEditor();try{Core.writeWorkspace(localStorage,files);}catch(e){}});
   var resizing=false,resizeRatio=.5,handle=document.getElementById("resizeHandle");
   function resizeAt(clientX){var rect=workspace.getBoundingClientRect(),ratio=(clientX-rect.left)/rect.width;ratio=Math.max(.25,Math.min(.75,ratio));resizeRatio=ratio;workspace.style.gridTemplateColumns="minmax(0,"+(ratio*100)+"fr) 8px minmax(0,"+((1-ratio)*100)+"fr)";}
   handle.addEventListener("pointerdown",function(event){if(matchMedia("(max-width: 760px)").matches)return;resizing=true;var rect=workspace.getBoundingClientRect();resizeRatio=(event.clientX-rect.left)/rect.width;handle.setPointerCapture(event.pointerId);event.preventDefault();});

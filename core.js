@@ -80,6 +80,24 @@
       /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name) && name !== "." && name !== "..";
   }
 
+  function writeWorkspace(storage, files) {
+    var workspace = JSON.stringify({ format: "code-forge-workspace", version: 2, files: files });
+    try {
+      storage.setItem("code-forge-workspace-v2", workspace);
+    } catch (error) {
+      return { saved: false, legacySaved: false, error: error };
+    }
+    try {
+      storage.setItem("code-forge-project-v1", JSON.stringify({
+        html: files["index.html"], css: files["styles.css"], js: files["app.js"]
+      }));
+      return { saved: true, legacySaved: true };
+    } catch (error) {
+      // The v2 workspace is the source of truth; a failed legacy mirror must not mark it unsaved.
+      return { saved: true, legacySaved: false, error: error };
+    }
+  }
+
   function readWorkspace(value) {
     var parsed = typeof value === "string" ? JSON.parse(value) : value;
     if (parsed && parsed.format === "code-forge-workspace") {
@@ -103,5 +121,5 @@
     return { "index.html": legacy.html, "styles.css": legacy.css, "app.js": legacy.js };
   }
 
-  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace };
+  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace, writeWorkspace: writeWorkspace };
 });

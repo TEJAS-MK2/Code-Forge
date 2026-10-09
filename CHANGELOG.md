@@ -18,3 +18,4 @@
 - Added an accessible Go to Line dialog with line validation and Ctrl/⌘ + G shortcut, also available in the command palette.
 - Preserved search controls and result navigation after opening a match or applying replacements.
 - Kept template files visibly unsaved when local storage fails and clarified the warning shown when closing an unsaved virtual file.
+- Added a tested storage writer that distinguishes primary workspace failures from failures of the legacy compatibility mirror, with quota-failure recovery tests.

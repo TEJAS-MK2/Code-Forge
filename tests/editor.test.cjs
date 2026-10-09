@@ -377,3 +377,36 @@ test("search panel remains mounted after navigating or replacing workspace match
   assert.match(app, /if\(sideView!=="search"\)renderExplorer\(\);updateCursor\(\)/);
   assert.match(app, /function jumpToSearchMatch\(index\)/);
 });
+
+
+test("workspace save reports quota failures without mutating in-memory files", () => {
+  const files = { "index.html": "<h1>Unsaved work</h1>", "styles.css": "", "app.js": "", "notes.md": "keep me" };
+  const before = JSON.stringify(files);
+  const storage = { setItem() { const error = new Error("QuotaExceededError"); error.name = "QuotaExceededError"; throw error; } };
+  const result = Core.writeWorkspace(storage, files);
+  assert.equal(result.saved, false);
+  assert.equal(result.legacySaved, false);
+  assert.equal(result.error.name, "QuotaExceededError");
+  assert.equal(JSON.stringify(files), before);
+});
+
+test("workspace remains saved if only the legacy compatibility mirror fails", () => {
+  const stored = new Map();
+  const storage = { setItem(key, value) { if (key === "code-forge-project-v1") throw new Error("quota"); stored.set(key, value); } };
+  const files = { "index.html": "<h1>Primary workspace</h1>", "styles.css": "", "app.js": "" };
+  const result = Core.writeWorkspace(storage, files);
+  assert.equal(result.saved, true);
+  assert.equal(result.legacySaved, false);
+  assert.equal(Core.readWorkspace(stored.get("code-forge-workspace-v2"))["index.html"], files["index.html"]);
+});
+
+test("failed quota save leaves the previous workspace recoverable", () => {
+  const original = { "index.html": "<h1>Previous</h1>", "styles.css": "", "app.js": "" };
+  const previousBackup = JSON.stringify({ format: "code-forge-workspace", version: 2, files: original });
+  const storage = { getItem() { return previousBackup; }, setItem() { const error = new Error("quota"); error.name = "QuotaExceededError"; throw error; } };
+  const changed = { "index.html": "<h1>New unsaved work</h1>", "styles.css": "", "app.js": "" };
+  const result = Core.writeWorkspace(storage, changed);
+  assert.equal(result.saved, false);
+  assert.deepEqual({ ...Core.readWorkspace(storage.getItem("code-forge-workspace-v2")) }, original);
+  assert.equal(changed["index.html"], "<h1>New unsaved work</h1>");
+});
