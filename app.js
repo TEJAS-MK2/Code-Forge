@@ -281,7 +281,7 @@
   }
   var searchMatches=[],searchMatchIndex=-1;
   function searchPattern(query,options) {
-    var escaped=String(query).replace(/[.*+?^$()|[\]\\]/g,function(char){return "\\"+char;});
+    var escaped="";String(query).split("").forEach(function(char){if("\\^$.*+?()[]{}|".indexOf(char)>=0)escaped+="\\";escaped+=char;});
     var source=options&&options.wholeWord?"(^|[^A-Za-z0-9_])("+escaped+")(?=$|[^A-Za-z0-9_])":escaped;
     return new RegExp(source,"g"+(options&&options.caseSensitive?"":"i")+(options&&options.wholeWord?"m":""));
   }
@@ -291,7 +291,7 @@
     var lineObj=editorView.state.doc.line(Math.min(match.line,editorView.state.doc.lines));
     editorView.dispatch({selection:{anchor:Math.min(lineObj.to,lineObj.from+match.column)},scrollIntoView:true});
     editor.focus();
-    var results=document.getElementById("searchResults");
+    var results=document.querySelector(".search-results");
     if(results){results.querySelectorAll(".search-hit").forEach(function(hit){hit.classList.remove("is-current");});var current=results.querySelector('[data-match-index="'+index+'"]');if(current){current.classList.add("is-current");current.scrollIntoView({block:"nearest"});}}
     var summary=document.getElementById("searchSummary");if(summary)summary.textContent=(index+1)+" of "+searchMatches.length+" matches";
   }

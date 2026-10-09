@@ -222,7 +222,7 @@ test("workspace-wide replace, preview viewport presets and persisted wrap prefer
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
   const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
-  assert.match(app, /function replaceAllFiles\(query,replacement\)/);
+  assert.match(app, /function replaceAllFiles\(query,replacement,options\)/);
   assert.match(app, /Replace all in workspace/);
   assert.match(app, /code-forge-word-wrap/);
   assert.match(app, /code-forge-preview-device/);
