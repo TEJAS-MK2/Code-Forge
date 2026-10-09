@@ -343,7 +343,11 @@ test("mobile workspace constrains horizontal overflow without changing desktop i
   const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
   assert.match(css, /\.app-shell\{width:100%;min-width:0;max-width:100%;overflow-x:clip\}/);
   assert.match(css, /@media\(max-width:760px\)\{html,body\{max-width:100%;overflow-x:hidden\}/);
-  assert.match(css, /\.workspace\{min-width:0;width:100%;max-width:100%\}/);
+  assert.match(css, /\.workspace\{min-width:0;width:100%;max-width:100%;flex:1 1 auto\}/);
+  assert.match(css, /main \{ min-width: 0; width: 100%; max-width: 100%; \}/);
+  assert.match(css, /\.ide-layout\{[^}]*min-width:0;width:100%;max-width:100%/);
+  assert.match(css, /\.editor-host \.cm-editor \{ height: 100%; width: 100%; min-width: 0; max-width: 100%;/);
+  assert.match(css, /\.editor-host \.cm-scroller \{ min-width: 0; max-width: 100%; overflow: auto; \}/);
 });
 
 

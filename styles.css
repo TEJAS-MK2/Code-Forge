@@ -41,6 +41,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .button small { margin-left: 8px; font-size: 10px; opacity: .72; }
 .file-input { display: none; }
 main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+main { min-width: 0; width: 100%; max-width: 100%; }
 
 .viewbar { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:42px; padding:6px 14px 0; }
 .viewbar-caption { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:11px; font-weight:650; letter-spacing:.035em; }
@@ -139,8 +140,8 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 /* CodeMirror 6 replaces the plain textarea with a structured, keyboard-friendly editor. */
 .editor-body { display: flex; flex: 1; min-height: 220px; overflow: hidden; background: #141714; }
 .editor-host { width: 100%; height: 100%; min-width: 0; min-height: 220px; overflow: hidden; }
-.editor-host .cm-editor { height: 100%; min-height: 220px; }
-.editor-host .cm-scroller { overflow: auto; }
+.editor-host .cm-editor { height: 100%; width: 100%; min-width: 0; max-width: 100%; min-height: 220px; }
+.editor-host .cm-scroller { min-width: 0; max-width: 100%; overflow: auto; }
 .editor-host .cm-focused { outline: none; }
 .editor-host .cm-editor.cm-focused { outline: 2px solid transparent; }
 .editor-host .cm-gutters { user-select: none; }
@@ -149,7 +150,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 @media (max-width: 760px) { .editor-host, .editor-host .cm-editor { min-height: 280px; } }
 
 /* IDE shell: restrained desktop-editor chrome with a usable local explorer. */
-.ide-layout{display:flex;align-items:stretch;min-width:0;flex:1;border-bottom:1px solid var(--line);background:var(--canvas)}
+.ide-layout{display:flex;align-items:stretch;min-width:0;width:100%;max-width:100%;flex:1;overflow-x:clip;border-bottom:1px solid var(--line);background:var(--canvas)}
 .activity-rail{width:46px;flex:0 0 46px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 5px;background:#141714;border-right:1px solid var(--line)}
 .rail-button{width:34px;height:36px;border:0;border-left:2px solid transparent;border-radius:4px;background:transparent;color:var(--muted);font-size:21px}
 .rail-button:hover{background:var(--surface-raised);color:var(--ink)}
@@ -208,7 +209,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
  .rail-button{height:31px;width:35px}
  .side-panel{position:absolute;z-index:4;top:42px;left:0;bottom:auto;width:min(82vw,270px);max-height:60vh;min-height:180px;box-shadow:12px 12px 28px #0007}
  .side-panel.is-collapsed{width:0;min-width:0}
- .ide-layout>.workspace{width:100%;flex:auto}
+ .ide-layout>.workspace{min-width:0;width:100%;max-width:100%;flex:1 1 auto}
  .file-tabs{min-width:0;overflow:auto}
  .tab.file-tab{max-width:150px;padding:9px 7px}
  .tab.file-tab[aria-selected=true]{padding-top:7px}
@@ -248,7 +249,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .search-summary{margin:4px 0;color:var(--muted);font-size:10px}
 .search-hit.is-current{outline:1px solid var(--accent);background:var(--surface-raised)}
 .app-shell{width:100%;min-width:0;max-width:100%;overflow-x:clip}
-@media(max-width:760px){html,body{max-width:100%;overflow-x:hidden}.workspace{min-width:0;width:100%;max-width:100%}.preview-pane,.editor-pane{min-width:0;max-width:100%}}
+@media(max-width:760px){html,body{width:100%;max-width:100%;overflow-x:clip}.workspace{min-width:0;width:100%;max-width:100%;flex:1 1 auto}.preview-pane,.editor-pane{min-width:0;width:100%;max-width:100%}.editor-body,.editor-host,.editor-host .cm-editor,.editor-host .cm-scroller{min-width:0;max-width:100%}}
 @media(max-width:430px){.preview-toolbar{align-items:flex-start;flex-direction:column}.preview-toolbar .button-group{width:100%;flex-wrap:wrap}.preview-device{max-width:100%}}
 
 .console-time{flex:0 0 auto;color:var(--subtle);font-size:9px;padding-top:2px}
