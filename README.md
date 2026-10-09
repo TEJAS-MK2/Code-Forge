@@ -12,7 +12,7 @@ A small, local-first browser workspace for writing HTML, CSS and JavaScript. No 
 - **Local autosave:** your current project is saved to this browser's localStorage.
 - **Portable project backup:** export and import a JSON project file to move work between browsers or devices.
 - **Standalone HTML export:** download a single HTML file with your HTML, CSS and JavaScript combined.
-- **Adjustable workspace:** resize the editor/preview split on desktop; the layout stacks on smaller screens.
+- **Flexible workspace:** switch between side-by-side, stacked, editor-focus and preview-focus layouts. The editor/preview split is resizable on desktop, and your preferred layout is saved locally.
 - **Keyboard and accessibility basics:** keyboard shortcuts, visible focus styles, labeled editor controls and reduced-motion support.
 - **No build step:** plain HTML, CSS and JavaScript, with no third-party runtime dependency.
 
