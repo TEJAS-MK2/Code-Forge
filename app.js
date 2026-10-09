@@ -21,6 +21,8 @@
   var editorHost = document.getElementById("editorHost");
   var languageCompartment = new Engine.Compartment();
   var wrappingCompartment = new Engine.Compartment();
+  var indentCompartment = new Engine.Compartment();
+  var switchingFile = false;
   var editorView;
   var layout = "split";
   var sideView = "explorer";
@@ -173,8 +175,8 @@
     if(files[name]==null) return;
     rememberEditor();activeFile=name;
     if(!openFiles.includes(name))openFiles.push(name);
-    editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(name))});
-    editor.value=files[name];
+    switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(name))});
+    editor.value=files[name];switchingFile=false;
     renderTabs();renderExplorer();updateCursor();editor.focus();
     document.getElementById("trim").disabled=false;
     output("Workspace","Opened "+name+".");
@@ -199,7 +201,7 @@
       settings.innerHTML='<p class="settings-kicker">EDITOR</p><label class="setting-row"><span>Indentation</span><select id="indentSetting"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab character</option></select></label><label class="setting-row"><span>Word wrap</span><input id="wrapSetting" type="checkbox" checked></label><p class="settings-help">Projects and preferences stay in this browser profile. No account or cloud sync is used.</p>';
       sidePanelBody.append(settings);
       var indent=settings.querySelector("#indentSetting");try{indent.value=localStorage.getItem("code-forge-indent")||"2";}catch(e){}
-      indent.addEventListener("change",function(){try{localStorage.setItem("code-forge-indent",indent.value);}catch(e){}document.getElementById("indentLabel").textContent=indent.value==="tab"?"Tabs":"Spaces: "+indent.value;});
+      indent.addEventListener("change",function(){try{localStorage.setItem("code-forge-indent",indent.value);}catch(e){}editorView.dispatch({effects:indentCompartment.reconfigure(Engine.indentUnit.of(indent.value==="tab"?"\t":" ".repeat(Number(indent.value))))});document.getElementById("indentLabel").textContent=indent.value==="tab"?"Tabs":"Spaces: "+indent.value;});
       settings.querySelector("#wrapSetting").addEventListener("change",function(e){editorView.dispatch({effects:wrappingCompartment.reconfigure(e.target.checked?Engine.lineWrapping:[])});});
       return;
     }
@@ -259,7 +261,7 @@
     if(["index.html","styles.css","app.js"].includes(name)){say("The three preview entry files are required.");return;}
     if(!confirm("Delete "+name+" from this browser workspace?"))return;
     delete files[name];delete dirty[name];openFiles=openFiles.filter(function(n){return n!==name;});
-    if(activeFile===name){activeFile="index.html";editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];}
+    if(activeFile===name){activeFile="index.html";switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;}
     persist(true);renderTabs();renderExplorer();updateCursor();say("Deleted "+name);
   }
   function switchSideView(view) {
@@ -289,7 +291,7 @@
         }
         if(!next["index.html"]||next["styles.css"]==null||next["app.js"]==null)throw new Error("Backup must include index.html, styles.css and app.js.");
         files=next;dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";
-        editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];
+        switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
         persist(true);renderTabs();renderExplorer();updateCursor();renderPreview(false);say("Workspace imported");
       }catch(e){say(e.message||"Could not read this workspace backup.");}
     };
@@ -310,7 +312,7 @@
   document.querySelectorAll(".rail-button").forEach(function(button){button.addEventListener("click",function(){switchSideView(button.dataset.view);});});
   document.getElementById("newFile").addEventListener("click",newFile);
   document.getElementById("collapseExplorer").addEventListener("click",function(){sidePanel.classList.toggle("is-collapsed");});
-  var engineExtensions=[Engine.basicSetup,Engine.theme,languageCompartment.of(languageExtension(activeFile)),wrappingCompartment.of(Engine.lineWrapping),Engine.EditorView.updateListener.of(function(update){if(update.docChanged)emit("input");if(update.selectionSet||update.docChanged)emit("select");})];
+  var engineExtensions=[Engine.basicSetup,Engine.theme,languageCompartment.of(languageExtension(activeFile)),wrappingCompartment.of(Engine.lineWrapping),indentCompartment.of(Engine.indentUnit.of("  ")),Engine.EditorView.updateListener.of(function(update){if(update.docChanged&&!switchingFile)emit("input");if(update.selectionSet||update.docChanged)emit("select");})];
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
   setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
@@ -367,7 +369,7 @@
   document.getElementById("reset").addEventListener("click",function(){
     if(!confirm("Restore the starter workspace? All local workspace files will be replaced."))return;
     files=Object.assign({},START);dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";
-    editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];
+    switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
     persist(false);renderTabs();renderExplorer();updateCursor();renderPreview(false);say("Starter workspace restored");
   });
   document.getElementById("exportHtml").addEventListener("click",function(){rememberEditor();persist(false);download("code-forge-project.html",Core.buildDocument(files["index.html"],files["styles.css"],files["app.js"],""),"text/html;charset=utf-8");say("Standalone HTML downloaded");});

@@ -170,3 +170,18 @@ test("command palette is an accessible filterable dialog, not a browser prompt",
   assert.match(app, /ArrowDown/);
   assert.doesNotMatch(app, /prompt\("COMMAND PALETTE/);
 });
+
+
+test("programmatic file switches do not mark files as edited", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /var switchingFile = false/);
+  assert.match(app, /if\(update\.docChanged&&!switchingFile\)emit\("input"\)/);
+  assert.match(app, /switchingFile=true;editorView\.dispatch/);
+});
+
+test("indentation setting updates CodeMirror's actual indent unit", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const source = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(source, /import \{ indentUnit \} from "@codemirror\/language"/);
+  assert.match(app, /indentCompartment\.reconfigure\(Engine\.indentUnit\.of/);
+});

@@ -1,6 +1,7 @@
 import { EditorView, basicSetup } from "codemirror";
 import { Compartment } from "@codemirror/state";
 import { lineWrapping } from "@codemirror/view";
+import { indentUnit } from "@codemirror/language";
 import { html } from "@codemirror/lang-html";
 import { css } from "@codemirror/lang-css";
 import { javascript } from "@codemirror/lang-javascript";
@@ -19,4 +20,4 @@ const theme = EditorView.theme({
   ".cm-foldPlaceholder": { border: "1px solid #485046", backgroundColor: "#242923", color: "#a0a99b" }
 }, { dark: true });
 
-window.CodeForgeEditorEngine = { EditorView, Compartment, basicSetup, html, css, javascript, lineWrapping, theme };
+window.CodeForgeEditorEngine = { EditorView, Compartment, basicSetup, html, css, javascript, lineWrapping, indentUnit, theme };
