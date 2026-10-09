@@ -2,6 +2,9 @@
 
 ## 2026-10-09
 
+- Hardened GitHub Actions with immutable SHA-pinned actions and least-privilege deployment permissions.
+- Added weekly Dependabot checks and pull-request CI that validates changes without deploying pull request code.
+
 - Fixed startup recovery initialization so malformed workspace backups remain available for export.
 - Removed nested interactive buttons from the file explorer for more reliable keyboard and screen-reader interaction.
 - Added regression checks for startup recovery and explorer semantics.
