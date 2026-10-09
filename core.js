@@ -13,9 +13,14 @@
     var source = String(html == null ? "" : html);
     var styles = "<style id=\"code-forge-user-styles\">\n" + String(css == null ? "" : css) + "\n</style>";
     var meta = '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
-    if (!/<html(?:\s|>)/i.test(source)) {
-      source = "<!doctype html>\n<html lang=\"en\">\n<head>" + meta + styles + "</head>\n<body>" + source + "</body>\n</html>";
-    } else if (!/<head(?:\s|>)/i.test(source)) {
+    if (!/<html(?:\\s|>)/i.test(source)) {
+      if (/<(?:head|body)(?:\\s|>)/i.test(source)) {
+        source = "<!doctype html>\\n<html lang=\\\"en\\\">\\n" + source + "\\n</html>";
+      } else {
+        source = "<!doctype html>\\n<html lang=\\\"en\\\">\\n<head>" + meta + styles + "</head>\\n<body>" + source + "</body>\\n</html>";
+      }
+    }
+    if (!/<head(?:\\s|>)/i.test(source)) {
       source = source.replace(/<html([^>]*)>/i, function (match) {
         return match + "\n<head>" + meta + styles + "</head>";
       });
