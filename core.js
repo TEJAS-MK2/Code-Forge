@@ -17,7 +17,7 @@
       if (/<(?:head|body)(?:\s|>)/i.test(source)) {
         source = "<!doctype html>\n<html lang=\"en\">\n" + source + "\n</html>";
       } else {
-        source = "<!doctype html>\n<html lang=\"en\">\n<head>" + meta + styles + "</head>\n<body>" + source + "</body>\n</html>";
+        source = "<!doctype html>\n<html lang=\"en\">\n<head>" + meta + "</head>\n<body>" + source + "</body>\n</html>";
       }
     }
     if (!/<head(?:\s|>)/i.test(source)) {
