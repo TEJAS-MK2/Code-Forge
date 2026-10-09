@@ -71,7 +71,7 @@ test("exposes all workspace layouts and persists the user's choice", () => {
   }
   assert.match(html, /role="group" aria-label="Workspace layout"/);
   assert.ok(app.includes("function setLayout(nextLayout)"));
-  assert.ok(app.includes('localStorage.setItem("code-forge-layout-v1", layout)'));
+  assert.ok(app.includes('localStorage.setItem("code-forge-layout-v1",layout)'));
   assert.ok(app.includes('button.setAttribute("aria-pressed"'));
 });
 
