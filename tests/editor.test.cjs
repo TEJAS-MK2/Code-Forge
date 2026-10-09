@@ -22,6 +22,7 @@ test("wraps HTML fragments in a valid document", () => {
   assert.match(result, /<!doctype html>/i);
   assert.match(result, /<body><h1>Fragment<\/h1><\/body>/);
   assert.match(result, /color: teal/);
+  assert.equal((result.match(/id="code-forge-user-styles"/g) || []).length, 1);
 });
 
 test("installs runtime diagnostics before user JavaScript", () => {
