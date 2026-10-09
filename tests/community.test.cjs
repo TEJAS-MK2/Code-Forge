@@ -79,3 +79,22 @@ test("workflow checks community files and executes browser tests before deployme
     assert.ok(workflow.includes(value), `Workflow is missing validation: ${value}`);
   }
 });
+
+
+test("CI pins every action, limits deployment permissions, and validates pull requests without deploying", () => {
+  const workflow = read(".github/workflows/pages.yml");
+  const actionRefs = [...workflow.matchAll(/^\\s*uses:\\s*([^#\\s]+)/gm)].map(match => match[1]);
+  assert.ok(actionRefs.length > 0, "workflow should use explicit actions");
+  for (const ref of actionRefs) assert.match(ref, /@[a-f0-9]{40}$/, `Action is not pinned to a full SHA: ${ref}`);
+  assert.match(workflow, /^permissions:\\n  contents: read$/m);
+  assert.match(workflow, /deploy:\\n    if: github.event_name != 'pull_request'[\\s\\S]*?permissions:\\n      contents: read\\n      pages: write\\n      id-token: write/);
+  assert.match(workflow, /pull_request:\\n    branches: \\[main\\]/);
+  assert.match(workflow, /group: code-forge-\\$\\{\\{ github\\.event\\.pull_request\\.number \\|\\| github\\.ref \\}\\}/);
+});
+
+test("Dependabot is configured to check npm and GitHub Actions updates weekly", () => {
+  const config = read(".github/dependabot.yml");
+  assert.match(config, /package-ecosystem: npm/);
+  assert.match(config, /package-ecosystem: github-actions/);
+  assert.equal((config.match(/interval: weekly/g) || []).length, 2);
+});
