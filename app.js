@@ -22,6 +22,25 @@
   var consoleLines = 0;
   var currentChannel = "";
   var workspace = document.getElementById("workspace");
+  var layout = "split";
+
+  function readLayout() {
+    try {
+      var saved = localStorage.getItem("code-forge-layout-v1");
+      if (["split", "stack", "editor", "preview"].indexOf(saved) !== -1) return saved;
+    } catch (error) {}
+    return "split";
+  }
+  function setLayout(nextLayout) {
+    if (["split", "stack", "editor", "preview"].indexOf(nextLayout) === -1) return;
+    layout = nextLayout;
+    workspace.classList.remove("layout-split", "layout-stack", "layout-editor", "layout-preview");
+    workspace.classList.add("layout-" + layout);
+    document.querySelectorAll(".layout-button").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.layout === layout));
+    });
+    try { localStorage.setItem("code-forge-layout-v1", layout); } catch (error) {}
+  }
 
   function loadProject() {
     try {
@@ -151,6 +170,10 @@
 
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () { setTab(tab.dataset.lang); });
+  });
+  setLayout(readLayout());
+  document.querySelectorAll(".layout-button").forEach(function (button) {
+    button.addEventListener("click", function () { setLayout(button.dataset.layout); });
   });
   editor.value = project[active];
   updateCursor();
