@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        For bugs, use the Bug report form. For security issues, follow SECURITY.md and do not include sensitive details in a public issue.
+        For bugs, use the Bug report form. For security issues, follow SECURITY.md and do not include security-sensitive details in a public issue.
   - type: textarea
     id: question
     attributes:
