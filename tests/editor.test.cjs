@@ -465,3 +465,13 @@ test("saved word-wrap preference configures its own compartment without replacin
   assert.match(app, /engineExtensions\[4\]=wrappingCompartment\.of\(savedWrap\?Engine\.EditorView\.lineWrapping:\[\]\)/);
   assert.doesNotMatch(app, /engineExtensions\[3\]=wrappingCompartment\.of/);
 });
+
+test("file rename and duplicate snapshot the active editor before mutating workspace entries and imports have a size guard", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const duplicate = app.slice(app.indexOf("function duplicateFile"), app.indexOf("function renameFile"));
+  const rename = app.slice(app.indexOf("function renameFile"), app.indexOf("function deleteFile"));
+  assert.ok(duplicate.indexOf("rememberEditor();") < duplicate.indexOf("files[name]=files[sourceName]"));
+  assert.ok(rename.indexOf("rememberEditor();") < rename.indexOf("files[name]=files[oldName]"));
+  assert.match(app, /var MAX_IMPORT_BYTES = 10 \* 1024 \* 1024/);
+  assert.match(app, /if\(file\.size>MAX_IMPORT_BYTES\)/);
+});

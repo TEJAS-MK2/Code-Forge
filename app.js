@@ -369,6 +369,8 @@
   }
   function duplicateFile(sourceName) {
     if(files[sourceName]==null)return;
+    // Capture the live CodeMirror buffer before copying the workspace snapshot.
+    rememberEditor();
     var suggestion=sourceName.replace(/(\.[^.]+)?$/, "-copy$1");
     var name=prompt("Duplicate "+sourceName+" as:",suggestion);
     if(!name)return;name=name.trim();
@@ -382,6 +384,8 @@
     var name=prompt("Rename "+oldName+" to:",oldName);if(!name||name===oldName)return;name=name.trim();
     if(!safeName(name)){say("That file name is not supported.");return;}
     if(files[name]!=null){say("A file with that name already exists.");return;}
+    // Snapshot the active editor before removing the old key, or live edits can be lost.
+    rememberEditor();
     files[name]=files[oldName];delete files[oldName];if(dirty[oldName])dirty[name]=true;delete dirty[oldName];
     recentFiles=recentFiles.map(function(item){return item===oldName?name:item;});
     try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
@@ -418,8 +422,10 @@
     download("code-forge-recovery-copy.json",recoveryBackupRaw,"application/json;charset=utf-8");
     say("Raw recovery copy downloaded; the original contents were not modified.");
   }
+  var MAX_IMPORT_BYTES = 10 * 1024 * 1024;
   function importWorkspace(file) {
     if(!file)return;
+    if(file.size>MAX_IMPORT_BYTES){say("Workspace backups must be 10 MiB or smaller.");return;}
     if(!confirm("Importing this backup replaces every file in the current local workspace. Export a backup first if you need the current version."))return;
     var reader=new FileReader();
     reader.onload=function(){

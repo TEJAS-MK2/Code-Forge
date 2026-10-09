@@ -197,6 +197,71 @@ async function main() {
     assert.equal(backup.files["e2e-notes.md"], "");
     console.log("PASS: workspace export downloads every file in the local workspace");
 
+    // Regression: duplicate and rename must preserve text still in the live editor buffer.
+    const dialogResponses = ["duplicate", "e2e-notes-copy.md"];
+    const dialogErrors = [];
+    const answerDialogs = dialog => {
+      const answer = dialogResponses.shift();
+      if (dialog.type() !== "prompt" || answer === undefined) {
+        dialogErrors.push("Unexpected dialog: " + dialog.type() + " " + dialog.message());
+        return dialog.dismiss();
+      }
+      return dialog.accept(answer);
+    };
+    page.on("dialog", answerDialogs);
+    const liveEditor = page.locator("#editorHost .cm-content[contenteditable=\\"true\\"]");
+    await liveEditor.click();
+    await page.keyboard.press("Control+A");
+    await page.keyboard.insertText("unsaved before duplicate");
+    await page.getByRole("button", { name: "Actions for e2e-notes.md" }).click();
+    await page.waitForFunction(() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("code-forge-workspace-v2") || "null");
+        return saved?.files?.["e2e-notes-copy.md"] === "unsaved before duplicate";
+      } catch { return false; }
+    }, null, { timeout: 7000 });
+    assert.deepEqual(dialogResponses, []);
+    assert.deepEqual(dialogErrors, []);
+    page.off("dialog", answerDialogs);
+    console.log("PASS: duplicating a file captures unsaved CodeMirror edits");
+
+    const renameResponses = ["rename", "e2e-renamed.md"];
+    const renameErrors = [];
+    const answerRenameDialogs = dialog => {
+      const answer = renameResponses.shift();
+      if (dialog.type() !== "prompt" || answer === undefined) {
+        renameErrors.push("Unexpected dialog: " + dialog.type() + " " + dialog.message());
+        return dialog.dismiss();
+      }
+      return dialog.accept(answer);
+    };
+    page.on("dialog", answerRenameDialogs);
+    await liveEditor.click();
+    await page.keyboard.press("Control+A");
+    await page.keyboard.insertText("unsaved before rename");
+    await page.getByRole("button", { name: "Actions for e2e-notes-copy.md" }).click();
+    await page.waitForFunction(() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("code-forge-workspace-v2") || "null");
+        return saved?.files?.["e2e-renamed.md"] === "unsaved before rename" &&
+          !Object.prototype.hasOwnProperty.call(saved.files, "e2e-notes-copy.md");
+      } catch { return false; }
+    }, null, { timeout: 7000 });
+    assert.deepEqual(renameResponses, []);
+    assert.deepEqual(renameErrors, []);
+    page.off("dialog", answerRenameDialogs);
+    console.log("PASS: renaming a file preserves unsaved CodeMirror edits");
+
+    const workspaceBeforeOversizeImport = await page.evaluate(() => localStorage.getItem("code-forge-workspace-v2"));
+    await page.locator("#importFile").setInputFiles({
+      name: "oversized-workspace.json",
+      mimeType: "application/json",
+      buffer: Buffer.alloc(10 * 1024 * 1024 + 1, 32)
+    });
+    await page.waitForFunction(() => document.querySelector("#toast")?.textContent.includes("10 MiB") === true, null, { timeout: 5000 });
+    assert.equal(await page.evaluate(() => localStorage.getItem("code-forge-workspace-v2")), workspaceBeforeOversizeImport);
+    console.log("PASS: oversized workspace imports are rejected without changing local data");
+
     await page.getByRole("button", { name: "Stack" }).click();
     assert.equal(await page.getByRole("button", { name: "Stack" }).getAttribute("aria-pressed"), "true");
     await page.getByRole("button", { name: "Split" }).click();
