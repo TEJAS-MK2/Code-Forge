@@ -209,7 +209,7 @@
     if(!openFiles.includes(name))openFiles.push(name);
     switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(name))});
     editor.value=files[name];switchingFile=false;
-    renderTabs();renderExplorer();updateCursor();editor.focus();
+    renderTabs();if(sideView!=="search")renderExplorer();updateCursor();editor.focus();
     document.getElementById("trim").disabled=false;
     output("Workspace","Opened "+name+".");
   }
@@ -293,7 +293,7 @@
     editor.focus();
     var results=document.querySelector(".search-results");
     if(results){results.querySelectorAll(".search-hit").forEach(function(hit){hit.classList.remove("is-current");});var current=results.querySelector('[data-match-index="'+index+'"]');if(current){current.classList.add("is-current");current.scrollIntoView({block:"nearest"});}}
-    var summary=document.getElementById("searchSummary");if(summary)summary.textContent=(index+1)+" of "+searchMatches.length+" matches";
+    var summary=document.querySelector("#searchSummary");if(summary)summary.textContent=(index+1)+" of "+searchMatches.length+" matches";
   }
   function navigateSearchMatch(direction) {
     if(!searchMatches.length){say("No search matches to navigate.");return;}
