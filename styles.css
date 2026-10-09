@@ -232,3 +232,13 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .tree-file-action:hover{background:#3a4234;color:var(--ink);opacity:1}
 .tree-file:hover .tree-file-action,.tree-file-action:focus-visible{opacity:1}
 @media(max-width:760px){.tree-file-action{opacity:1}}
+
+/* Preview viewport presets and cross-workspace replace controls. */
+.preview-device-label{align-self:center;color:#697064;font-size:10px}
+.preview-device{max-width:150px;min-height:26px;padding:4px 6px;border:1px solid #d0d4ca;border-radius:4px;background:#f8f9f5;color:#30352e;font-size:10px}
+.preview-frame{max-width:100%;margin-inline:auto;transition:width .16s ease}
+.preview-frame-device{border-left:1px solid #d5d9cf;border-right:1px solid #d5d9cf;box-shadow:0 0 0 1px #e1e4dc}
+.search-workspace{display:flex;flex-direction:column;gap:8px}
+.search-workspace .tree-add-file{width:100%;margin:0;text-align:center}
+.search-workspace input{min-height:35px}
+@media(max-width:430px){.preview-toolbar{align-items:flex-start;flex-direction:column}.preview-toolbar .button-group{width:100%;flex-wrap:wrap}.preview-device{max-width:100%}}

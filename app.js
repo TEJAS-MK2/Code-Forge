@@ -108,6 +108,17 @@
       return false;
     }
   }
+  function persistSnapshot(showError) {
+    try {
+      localStorage.setItem("code-forge-workspace-v2", JSON.stringify({format:"code-forge-workspace",version:2,files:files}));
+      localStorage.setItem("code-forge-project-v1", JSON.stringify({html:files["index.html"],css:files["styles.css"],js:files["app.js"]}));
+      saveState("Saved on this device",true); return true;
+    } catch (e) {
+      saveState("Storage unavailable",false);
+      if (showError) say("Browser storage is full or unavailable. Export a backup before continuing.");
+      return false;
+    }
+  }
   function updateCursor() {
     var doc=editorView.state.doc, pos=editorView.state.selection.main.head, line=doc.lineAt(pos);
     document.getElementById("cursor").textContent="Ln "+line.number+", Col "+(pos-line.from+1);
@@ -192,20 +203,31 @@
     sidePanelBody.replaceChildren();
     if(sideView==="search") {
       var wrap=document.createElement("div");wrap.className="search-workspace";
-      var input=document.createElement("input");input.type="search";input.id="workspaceSearch";input.placeholder="Search in files";input.setAttribute("aria-label","Search in workspace");
+      var input=document.createElement("input");input.type="search";input.id="workspaceSearch";input.placeholder="Find text in files";input.setAttribute("aria-label","Find text in workspace");
+      var replacement=document.createElement("input");replacement.type="text";replacement.id="workspaceReplace";replacement.placeholder="Replace with…";replacement.setAttribute("aria-label","Replacement text");
+      var replaceButton=document.createElement("button");replaceButton.type="button";replaceButton.className="tree-add-file";replaceButton.textContent="Replace all in workspace";
       var results=document.createElement("div");results.className="search-results";results.id="searchResults";
-      wrap.append(input,results);sidePanelBody.append(wrap);
-      input.addEventListener("input",function(){searchFiles(input.value,results);});input.focus();return;
+      wrap.append(input,replacement,replaceButton,results);sidePanelBody.append(wrap);
+      input.addEventListener("input",function(){searchFiles(input.value,results);});
+      replaceButton.addEventListener("click",function(){replaceAllFiles(input.value,replacement.value);searchFiles(input.value,results);});
+      input.focus();return;
     }
     if(sideView==="settings") {
       var settings=document.createElement("div");settings.className="settings-panel";
-      settings.innerHTML='<p class="settings-kicker">EDITOR</p><label class="setting-row"><span>Indentation</span><select id="indentSetting"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab character</option></select></label><label class="setting-row"><span>Font size</span><select id="fontSizeSetting"><option value="11">11 px</option><option value="12">12 px</option><option value="13">13 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option></select></label><label class="setting-row"><span>Word wrap</span><input id="wrapSetting" type="checkbox" checked></label><p class="settings-help">Projects and preferences stay in this browser profile. No account or cloud sync is used.</p>';
+      settings.innerHTML='<p class="settings-kicker">EDITOR</p><label class="setting-row"><span>Indentation</span><select id="indentSetting"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab character</option></select></label><label class="setting-row"><span>Font size</span><select id="fontSizeSetting"><option value="11">11 px</option><option value="12">12 px</option><option value="13">13 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option></select></label><label class="setting-row"><span>Word wrap</span><input id="wrapSetting" type="checkbox"></label><p class="settings-help">Projects and preferences stay in this browser profile. No account or cloud sync is used.</p>';
       sidePanelBody.append(settings);
       var indent=settings.querySelector("#indentSetting");try{indent.value=localStorage.getItem("code-forge-indent")||"2";}catch(e){}
       indent.addEventListener("change",function(){try{localStorage.setItem("code-forge-indent",indent.value);}catch(e){}editorView.dispatch({effects:indentCompartment.reconfigure(Engine.indentUnit.of(indent.value==="tab"?"\t":" ".repeat(Number(indent.value))))});document.getElementById("indentLabel").textContent=indent.value==="tab"?"Tabs":"Spaces: "+indent.value;});
       var fontSize=settings.querySelector("#fontSizeSetting");try{fontSize.value=localStorage.getItem("code-forge-font-size")||"12";}catch(e){}editorHost.style.setProperty("--cf-editor-font-size",fontSize.value+"px");
       fontSize.addEventListener("change",function(){var size=Number(fontSize.value);if(![11,12,13,14,16,18].includes(size))return;editorHost.style.setProperty("--cf-editor-font-size",size+"px");try{localStorage.setItem("code-forge-font-size",String(size));}catch(e){}say("Editor font size set to "+size+" px");editorView.requestMeasure();});
-      settings.querySelector("#wrapSetting").addEventListener("change",function(e){editorView.dispatch({effects:wrappingCompartment.reconfigure(e.target.checked?Engine.EditorView.lineWrapping:[])});});
+      var wrapSetting=settings.querySelector("#wrapSetting");
+      try{wrapSetting.checked=localStorage.getItem("code-forge-word-wrap")!=="false";}catch(e){wrapSetting.checked=true;}
+      editorView.dispatch({effects:wrappingCompartment.reconfigure(wrapSetting.checked?Engine.EditorView.lineWrapping:[])});
+      wrapSetting.addEventListener("change",function(e){
+        var enabled=!!e.target.checked;
+        editorView.dispatch({effects:wrappingCompartment.reconfigure(enabled?Engine.EditorView.lineWrapping:[])});
+        try{localStorage.setItem("code-forge-word-wrap",String(enabled));}catch(e){say("Could not save editor preferences in this browser.");}
+      });
       return;
     }
     var root=document.createElement("div");root.className="explorer-tree";
@@ -238,6 +260,20 @@
       });
     });
     if(!count){var none=document.createElement("p");none.className="settings-help";none.textContent="No matches found.";results.append(none);}
+  }
+  function replaceAllFiles(query,replacement) {
+    query=String(query||"");replacement=String(replacement==null?"":replacement);
+    if(!query){say("Enter text to find first.");return;}
+    rememberEditor();var count=0;
+    Object.keys(files).forEach(function(name){
+      var parts=files[name].split(query);
+      if(parts.length>1){count+=parts.length-1;files[name]=parts.join(replacement);}
+    });
+    if(!count){say("No matches to replace.");return;}
+    switchingFile=true;editor.value=files[activeFile];switchingFile=false;
+    var saved=persist(true);dirty=Object.create(null);renderTabs();renderExplorer();updateCursor();
+    if(["index.html","styles.css","app.js"].includes(activeFile))renderPreview(false);
+    say(saved?"Replaced "+count+" occurrence"+(count===1?"":"s")+" across the workspace.":"Replacement applied, but storage failed. Export a backup.");
   }
   function fileMenu(name) {
     if(["index.html","styles.css","app.js"].includes(name)){say("Core preview files cannot be renamed or deleted.");return;}
@@ -316,19 +352,28 @@
   document.getElementById("newFile").addEventListener("click",newFile);
   document.getElementById("collapseExplorer").addEventListener("click",function(){sidePanel.classList.toggle("is-collapsed");});
   var engineExtensions=[Engine.basicSetup,Engine.theme,languageCompartment.of(languageExtension(activeFile)),wrappingCompartment.of(Engine.lineWrapping),indentCompartment.of(Engine.indentUnit.of("  ")),Engine.EditorView.updateListener.of(function(update){if(update.docChanged&&!switchingFile)emit("input");if(update.selectionSet||update.docChanged)emit("select");})];
-  try{var savedFontSize=Number(localStorage.getItem("code-forge-font-size")||12);if([11,12,13,14,16,18].includes(savedFontSize))editorHost.style.setProperty("--cf-editor-font-size",savedFontSize+"px");}catch(e){}
+  try{
+    var savedFontSize=Number(localStorage.getItem("code-forge-font-size")||12);
+    if([11,12,13,14,16,18].includes(savedFontSize))editorHost.style.setProperty("--cf-editor-font-size",savedFontSize+"px");
+    var savedWrap=localStorage.getItem("code-forge-word-wrap")!=="false";
+    engineExtensions[3]=wrappingCompartment.of(savedWrap?Engine.EditorView.lineWrapping:[]);
+  }catch(e){}
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
   setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
   editor.addEventListener("input",function(){
     rememberEditor();dirty[activeFile]=true;saveState("Unsaved changes",false);renderTabs();renderExplorer();updateCursor();
-    clearTimeout(saveTimer);var changedFile=activeFile;saveTimer=setTimeout(function(){persist(false);dirty[changedFile]=false;renderTabs();renderExplorer();},180);
+    clearTimeout(saveTimer);var changedFile=activeFile;saveTimer=setTimeout(function(){
+       if(activeFile===changedFile)rememberEditor();
+       var saved=persistSnapshot(false);
+       if(saved){dirty[changedFile]=false;renderTabs();renderExplorer();}
+     },220);
     clearTimeout(previewTimer);if(["index.html","styles.css","app.js"].includes(activeFile))previewTimer=setTimeout(function(){renderPreview(false);},500);
   });
   editor.addEventListener("select",updateCursor);
   editor.addEventListener("keydown",function(event){
     if((event.ctrlKey||event.metaKey)&&event.key==="Enter"){event.preventDefault();clearTimeout(previewTimer);renderPreview(true);}
-    else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="s"){event.preventDefault();persist(true);dirty[activeFile]=false;renderTabs();renderExplorer();say("Saved in this browser");}
+    else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="s"){event.preventDefault();var saved=persist(true);if(saved){dirty[activeFile]=false;renderTabs();renderExplorer();say("Saved in this browser");}}
     else if((event.ctrlKey||event.metaKey)&&event.shiftKey&&event.key.toLowerCase()==="p"){event.preventDefault();commandPalette();}
     else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="n"){event.preventDefault();newFile();}
   });
@@ -366,12 +411,36 @@
     overlay.addEventListener("mousedown",function(event){if(event.target===overlay){overlay.remove();editor.focus();}});
     render();input.focus();
   }
+  var previewDevice=document.getElementById("previewDevice");
+  function setPreviewDevice(mode){
+    var widths={desktop:"100%",tablet:"768px",phone:"390px"};
+    if(!Object.prototype.hasOwnProperty.call(widths,mode))mode="desktop";
+    frame.style.width=widths[mode];frame.style.maxWidth="100%";frame.style.marginInline="auto";
+    frame.classList.toggle("preview-frame-device",mode!=="desktop");
+    try{localStorage.setItem("code-forge-preview-device",mode);}catch(e){}
+    previewDevice.value=mode;
+  }
+  try{var savedPreviewDevice=localStorage.getItem("code-forge-preview-device");if(["desktop","tablet","phone"].includes(savedPreviewDevice))setPreviewDevice(savedPreviewDevice);}catch(e){}
+  previewDevice.addEventListener("change",function(){setPreviewDevice(previewDevice.value);});
   document.getElementById("run").addEventListener("click",function(){clearTimeout(previewTimer);renderPreview(true);});
   document.getElementById("refresh").addEventListener("click",function(){clearTimeout(previewTimer);renderPreview(true);});
-  document.getElementById("clear").addEventListener("click",function(){editor.value="";rememberEditor();persist(false);updateCursor();renderExplorer();if(["index.html","styles.css","app.js"].includes(activeFile))renderPreview(false);editor.focus();say("Current file cleared");});
-  document.getElementById("trim").addEventListener("click",function(){editor.value=editor.value.split("\n").map(function(line){return line.replace(/[ \t]+$/,"");}).join("\n");rememberEditor();persist(false);updateCursor();say("Trailing whitespace removed");});
+  function markCurrentFileSaved() {
+    rememberEditor();var saved=persist(false);if(saved)dirty[activeFile]=false;
+    renderTabs();renderExplorer();updateCursor();return saved;
+  }
+  document.getElementById("clear").addEventListener("click",function(){
+    editor.value="";markCurrentFileSaved();
+    if(["index.html","styles.css","app.js"].includes(activeFile))renderPreview(false);
+    editor.focus();say("Current file cleared");
+  });
+  document.getElementById("trim").addEventListener("click",function(){
+    var before=editor.value,after=before.split("\n").map(function(line){return line.replace(/[ \t]+$/,"");}).join("\n");
+    if(after===before){say("No trailing whitespace found.");return;}
+    editor.value=after;markCurrentFileSaved();say("Trailing whitespace removed");
+  });
   document.getElementById("reset").addEventListener("click",function(){
     if(!confirm("Restore the starter workspace? All local workspace files will be replaced."))return;
+    clearTimeout(saveTimer);clearTimeout(previewTimer);
     files=Object.assign({},START);dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";
     switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
     persist(false);renderTabs();renderExplorer();updateCursor();renderPreview(false);say("Starter workspace restored");
@@ -393,7 +462,7 @@
     if(level==="error")document.getElementById("previewState").textContent="Runtime error";
     else if(level==="system")document.getElementById("previewState").textContent="Ready";
   });
-  window.addEventListener("beforeunload",function(){clearTimeout(saveTimer);rememberEditor();try{localStorage.setItem("code-forge-workspace-v2",JSON.stringify({format:"code-forge-workspace",version:2,files:files}));}catch(e){}});
+  window.addEventListener("beforeunload",function(){clearTimeout(saveTimer);rememberEditor();try{localStorage.setItem("code-forge-workspace-v2",JSON.stringify({format:"code-forge-workspace",version:2,files:files}));localStorage.setItem("code-forge-project-v1",JSON.stringify({html:files["index.html"],css:files["styles.css"],js:files["app.js"]}));}catch(e){}});
   var resizing=false,resizeRatio=.5,handle=document.getElementById("resizeHandle");
   function resizeAt(clientX){var rect=workspace.getBoundingClientRect(),ratio=(clientX-rect.left)/rect.width;ratio=Math.max(.25,Math.min(.75,ratio));resizeRatio=ratio;workspace.style.gridTemplateColumns="minmax(0,"+(ratio*100)+"fr) 8px minmax(0,"+((1-ratio)*100)+"fr)";}
   handle.addEventListener("pointerdown",function(event){if(matchMedia("(max-width: 760px)").matches)return;resizing=true;var rect=workspace.getBoundingClientRect();resizeRatio=(event.clientX-rect.left)/rect.width;handle.setPointerCapture(event.pointerId);event.preventDefault();});

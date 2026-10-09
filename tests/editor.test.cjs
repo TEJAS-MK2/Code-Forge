@@ -211,3 +211,26 @@ test("editor settings expose a persistent font-size preference", () => {
   assert.match(app, /localStorage\.setItem\("code-forge-font-size",String\(size\)\)/);
   assert.match(editor, /var\(--cf-editor-font-size, 12px\)/);
 });
+
+test("workspace-wide replace, preview viewport presets and persisted wrap preferences are wired", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(app, /function replaceAllFiles\(query,replacement\)/);
+  assert.match(app, /Replace all in workspace/);
+  assert.match(app, /code-forge-word-wrap/);
+  assert.match(app, /code-forge-preview-device/);
+  for (const mode of ["desktop", "tablet", "phone"]) assert.match(html, new RegExp('<option value="' + mode + '"'));
+  assert.match(css, /\.preview-frame-device/);
+});
+test("manual save never clears dirty state when local persistence fails", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /var saved=persist\(true\);if\(saved\)\{dirty\[activeFile\]=false/);
+  assert.match(app, /function persistSnapshot\(showError\)/);
+});
+test("clear and trim operations refresh saved indicators consistently", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /function markCurrentFileSaved\(\)/);
+  assert.match(app, /editor\.value="";markCurrentFileSaved\(\)/);
+  assert.match(app, /editor\.value=after;markCurrentFileSaved\(\)/);
+});

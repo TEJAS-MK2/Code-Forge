@@ -7,12 +7,12 @@ A small, local-first browser workspace for writing HTML, CSS and JavaScript. No 
 ## What it does
 
 - **Local multi-file workspace:** use the activity rail and Explorer to create, open, rename and delete additional text files. The workspace is virtual and browser-local, not a disk filesystem.
-- **Live preview:** changes refresh the preview automatically; use **Run** or **Ctrl/⌘ + Enter** to run immediately.
+- **Live preview:** changes refresh the preview automatically; use **Run** or **Ctrl/⌘ + Enter** to run immediately. Switch between desktop, tablet and phone viewport widths.
 - **Runtime console:** view console output, warnings and JavaScript runtime errors without leaving the page.
 - **Local autosave:** your current project is saved to this browser's localStorage.
 - **Portable workspace backup:** export/import JSON backups containing all workspace files. Older three-file backups remain supported.
 - **Standalone HTML export:** download a single HTML file with your HTML, CSS and JavaScript combined.
-- **IDE workspace:** activity rail, file explorer, tabs, unsaved indicators, workspace-wide text search, editor settings and a command palette (Ctrl/⌘ + Shift + P).
+- **IDE workspace:** activity rail, file explorer, tabs, unsaved indicators, workspace-wide text search and replace, editor settings and a command palette (Ctrl/⌘ + Shift + P).
 - **CodeMirror 6 editor:** syntax highlighting for HTML, CSS and JavaScript, line numbers, bracket matching, code folding, completion, search and undo/redo.
 - **Keyboard and accessibility basics:** keyboard shortcuts, visible focus styles, labeled editor controls and reduced-motion support.
 - **Local static bundle:** the editor libraries are bundled into the published site; no CDN, application backend or runtime package download is needed.
@@ -77,4 +77,4 @@ No license is specified yet. Add a license file if you want to grant others expl
 
 ### Editor preferences
 
-Use **Explorer → Settings** to choose indentation, toggle word wrapping, and adjust the editor font size from 11–18 px. The font-size preference is saved in this browser only; no account or cloud sync is involved.
+Use **Explorer → Settings** to choose indentation, toggle word wrapping, and adjust the editor font size from 11–18 px. Word wrap and font size are saved in this browser only. Choose desktop, tablet or phone under the preview's Viewport selector. Search can replace matching text across the local workspace; export a backup before large replacements. No account or cloud sync is involved.
