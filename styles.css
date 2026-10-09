@@ -166,9 +166,13 @@ main { min-width: 0; width: 100%; max-width: 100%; }
 .explorer-tree{padding:8px 0}
 .tree-section-label{display:flex;align-items:center;gap:7px;padding:5px 12px 9px;color:var(--muted);font-size:9px;font-weight:750;letter-spacing:.08em}
 .tree-count{margin-left:auto;color:var(--subtle);font-weight:500}
-.tree-file{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:7px 10px 7px 17px;border:0;border-left:2px solid transparent;background:transparent;text-align:left;color:#c9cec4;font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
+.tree-file{display:flex;align-items:stretch;gap:0;width:100%;min-width:0;border-left:2px solid transparent;background:transparent}
+.tree-file-open{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:7px 10px 7px 15px;border:0;background:transparent;text-align:left;color:#c9cec4;font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
+.tree-file-open:focus-visible{outline:1px solid var(--accent);outline-offset:-2px}
 .tree-file:hover{background:#222720}
-.tree-file.is-active{border-left-color:var(--accent);background:#252b22;color:#f1f3ed}
+.tree-file.is-active{border-left-color:var(--accent);background:#252b22}
+.tree-file.is-active .tree-file-open{color:#f1f3ed}
+.recent-file{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:7px 10px 7px 17px;border:0;border-left:2px solid transparent;background:transparent;text-align:left;color:#c9cec4;font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
 .tree-file-name,.file-tab-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tree-file-state{margin-left:auto;color:var(--accent);font-size:9px}
 .file-type-dot{display:inline-block;width:7px;height:7px;flex:0 0 7px;border-radius:2px;background:#9ca69a}

@@ -2,6 +2,10 @@
 
 ## 2026-10-09
 
+- Fixed startup recovery initialization so malformed workspace backups remain available for export.
+- Removed nested interactive buttons from the file explorer for more reliable keyboard and screen-reader interaction.
+- Added regression checks for startup recovery and explorer semantics.
+
 - Fixed data-loss edge cases by snapshotting the live editor before file duplication and rename.
 - Rejected workspace backup imports larger than 10 MiB before reading or replacing local data.
 - Added browser regressions for unsaved-file rename/duplicate behavior and oversized-import preservation.

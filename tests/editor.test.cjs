@@ -475,3 +475,10 @@ test("file rename and duplicate snapshot the active editor before mutating works
   assert.match(app, /var MAX_IMPORT_BYTES = 10 \* 1024 \* 1024/);
   assert.match(app, /if\(file\.size>MAX_IMPORT_BYTES\)/);
 });
+
+test("startup recovery state is initialized before loading a potentially malformed workspace", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.ok(app.indexOf("var recoveryBackupRaw=null") < app.indexOf("var files = loadFiles();"));
+  assert.match(app, /var item=document\.createElement\("div"\);item\.className="tree-file"/);
+  assert.match(app, /var openButton=document\.createElement\("button"\);openButton\.type="button";openButton\.className="tree-file-open"/);
+});

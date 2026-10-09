@@ -282,6 +282,16 @@ async function main() {
     }
     console.log("PASS: document and body stay within 390px and 320px viewports");
 
+    const invalidStoredWorkspace = JSON.stringify({ format: "code-forge-workspace", version: 99, files: {} });
+    await page.evaluate(raw => localStorage.setItem("code-forge-workspace-v2", raw), invalidStoredWorkspace);
+    await page.reload({ waitUntil: "load" });
+    await page.locator("#editorHost .cm-editor").waitFor({ state: "visible", timeout: 15000 });
+    assert.equal(await page.evaluate(() => localStorage.getItem("code-forge-recovery-backup-v1")), invalidStoredWorkspace);
+    await page.locator('#editorHost .cm-content[contenteditable="true"]').click();
+    await page.keyboard.press("Control+Shift+P");
+    await page.getByRole("button", { name: "Export preserved recovery copy" }).waitFor({ state: "visible", timeout: 5000 });
+    console.log("PASS: malformed stored workspace is preserved and recovery export remains available");
+
     assert.deepEqual(errors, [], `Unexpected uncaught browser errors: ${errors.join("; ")}`);
     console.log("PASS: no uncaught browser page errors");
     await context.close();

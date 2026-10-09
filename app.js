@@ -8,6 +8,8 @@
     "styles.css": '* { box-sizing: border-box; }\nbody {\n  margin: 0;\n  min-height: 100vh;\n  display: grid;\n  place-items: center;\n  padding: 24px;\n  background: #f2f0e9;\n  color: #20241e;\n  font-family: system-ui, sans-serif;\n}\n.card { max-width: 560px; }\n.eyebrow { color: #526b3e; letter-spacing: .14em; font-size: 12px; font-weight: 700; }\nh1 { font-size: clamp(2.5rem, 8vw, 4.5rem); line-height: 1.02; letter-spacing: -.06em; }\nh1 span { color: #55763b; }\np { color: #62685d; line-height: 1.7; }\nbutton { padding: 11px 16px; border: 0; border-radius: 6px; background: #b8e986; color: #182012; font-weight: 700; cursor: pointer; }',
     "app.js": "document.querySelector('#hello')?.addEventListener('click', () => {\n  document.querySelector('#message').textContent = 'Your JavaScript is running.';\n  console.log('Button clicked');\n});"
   };
+  var recoveryBackupRaw=null,recoveryBackupPreserved=false;
+  try { recoveryBackupRaw=localStorage.getItem("code-forge-recovery-backup-v1");recoveryBackupPreserved=!!recoveryBackupRaw; } catch(e) {}
   var files = loadFiles();
   var recentFiles=[];
   try{var storedRecent=JSON.parse(localStorage.getItem("code-forge-recent-files")||"[]");if(Array.isArray(storedRecent))recentFiles=storedRecent.filter(function(name){return safeName(name);}).slice(0,5);}catch(e){}
@@ -56,8 +58,6 @@
     var type = lang(name);
     return ({html:"HTML document",css:"CSS stylesheet",js:"JavaScript source",json:"JSON document",plain:"Plain text"})[type];
   }
-  var recoveryBackupRaw=null,recoveryBackupPreserved=false;
-  try { recoveryBackupRaw=localStorage.getItem("code-forge-recovery-backup-v1");recoveryBackupPreserved=!!recoveryBackupRaw; } catch(e) {}
   function loadFiles() {
     try {
       var v2 = localStorage.getItem("code-forge-workspace-v2");
@@ -268,11 +268,14 @@
     Object.keys(files).sort(function(a,b){
       var rank={"index.html":0,"styles.css":1,"app.js":2};return (rank[a]??10)-(rank[b]??10)||a.localeCompare(b);
     }).forEach(function(name){
-      var item=document.createElement("button");item.type="button";item.className="tree-file"+(name===activeFile?" is-active":"");item.title=name;
+      var item=document.createElement("div");item.className="tree-file"+(name===activeFile?" is-active":"");
+      var openButton=document.createElement("button");openButton.type="button";openButton.className="tree-file-open";openButton.title=name;
       var dot=document.createElement("span");dot.className="file-type-dot type-"+lang(name);
       var text=document.createElement("span");text.className="tree-file-name";text.textContent=name;
       var state=document.createElement("span");state.className="tree-file-state";state.textContent=dirty[name]?"●":"";
-      item.append(dot,text,state);if(!["index.html","styles.css","app.js"].includes(name)){var actions=document.createElement("button");actions.type="button";actions.className="tree-file-action";actions.textContent="⋯";actions.title="Rename or delete "+name;actions.setAttribute("aria-label","Actions for "+name);actions.addEventListener("click",function(e){e.stopPropagation();fileMenu(name);});item.append(actions);}item.addEventListener("click",function(){openFile(name);});item.addEventListener("contextmenu",function(e){e.preventDefault();fileMenu(name);});root.append(item);
+      openButton.append(dot,text,state);openButton.addEventListener("click",function(){openFile(name);});item.append(openButton);
+      if(!["index.html","styles.css","app.js"].includes(name)){var actions=document.createElement("button");actions.type="button";actions.className="tree-file-action";actions.textContent="⋯";actions.title="Rename or delete "+name;actions.setAttribute("aria-label","Actions for "+name);actions.addEventListener("click",function(e){e.stopPropagation();fileMenu(name);});item.append(actions);}
+      item.addEventListener("contextmenu",function(e){e.preventDefault();fileMenu(name);});root.append(item);
     });
     var visibleRecent=recentFiles.filter(function(name){return files[name]!=null;});
     if(visibleRecent.length){
