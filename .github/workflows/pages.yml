@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: 22
       - name: Install build and test dependencies
-        run: npm install --no-package-lock --no-fund
+        run: npm install --no-fund
       - name: Fail on high or critical dependency vulnerabilities
         run: npm audit --audit-level=high
       - name: Verify required application, test and community files
