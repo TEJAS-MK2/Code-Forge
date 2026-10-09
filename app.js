@@ -314,7 +314,9 @@
     name=name.trim();
     if(!safeName(name)){say("Use 1–64 letters, numbers, dots, underscores or hyphens. No folders.");return;}
     if(files[name]!=null){say("A file with that name already exists.");return;}
-    files[name]="";dirty[name]=false;persist(true);openFile(name);renderExplorer();say("Created "+name);
+    files[name]="";dirty[name]=false;
+    var saved=persist(true);if(!saved)dirty[name]=true;
+    openFile(name);renderExplorer();say(saved?"Created "+name:"Created "+name+" in memory; storage failed, so export a backup.");
   }
   function duplicateFile(sourceName) {
     if(files[sourceName]==null)return;
@@ -335,7 +337,8 @@
     recentFiles=recentFiles.map(function(item){return item===oldName?name:item;});
     try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
     openFiles=openFiles.map(function(n){return n===oldName?name:n;});if(activeFile===oldName)activeFile=name;
-    persist(true);renderTabs();renderExplorer();openFile(name);say("Renamed to "+name);
+    var saved=persist(true);if(!saved)dirty[name]=true;
+    renderTabs();renderExplorer();openFile(name);say(saved?"Renamed to "+name:"Renamed to "+name+" in memory; storage failed, so export a backup.");
   }
   function deleteFile(name) {
     if(["index.html","styles.css","app.js"].includes(name)){say("The three preview entry files are required.");return;}
@@ -343,7 +346,8 @@
     delete files[name];delete dirty[name];openFiles=openFiles.filter(function(n){return n!==name;});
     recentFiles=recentFiles.filter(function(item){return item!==name;});try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
     if(activeFile===name){activeFile="index.html";switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;}
-    persist(true);renderTabs();renderExplorer();updateCursor();say("Deleted "+name);
+    var saved=persist(true);renderTabs();renderExplorer();updateCursor();
+    say(saved?"Deleted "+name:"Deleted "+name+" in memory; storage failed, so export a backup before leaving.");
   }
   function switchSideView(view) {
     sideView=view;document.querySelectorAll(".rail-button").forEach(function(b){b.classList.toggle("is-active",b.dataset.view===view);});
@@ -498,7 +502,9 @@
     clearTimeout(saveTimer);clearTimeout(previewTimer);
     files=Object.assign({},START);dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";
     switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
-    persist(false);renderTabs();renderExplorer();updateCursor();renderPreview(false);say("Starter workspace restored");
+    var saved=persist(false);if(!saved)Object.keys(files).forEach(function(name){dirty[name]=true;});
+    renderTabs();renderExplorer();updateCursor();renderPreview(false);
+    say(saved?"Starter workspace restored":"Starter workspace restored in memory, but storage failed. Export a backup before leaving.");
   });
   document.getElementById("exportHtml").addEventListener("click",function(){rememberEditor();persist(false);download("code-forge-project.html",Core.buildDocument(files["index.html"],files["styles.css"],files["app.js"],""),"text/html;charset=utf-8");say("Standalone HTML downloaded");});
   document.getElementById("exportProject").addEventListener("click",exportWorkspace);

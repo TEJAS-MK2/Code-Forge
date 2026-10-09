@@ -142,10 +142,12 @@ test("IDE workspace includes local explorer, file search, tabs and truthful pane
 
 test("workspace backup keeps legacy three-file project import compatible", () => {
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
-  assert.ok(app.includes("Core.readProject(parsed)"));
-  assert.ok(app.includes('"index.html":legacy.html'));
-  assert.ok(app.includes('"styles.css":legacy.css'));
-  assert.ok(app.includes('"app.js":legacy.js'));
+  const core = fs.readFileSync(path.join(root, "core.js"), "utf8");
+  assert.ok(app.includes("Core.readWorkspace(String(reader.result))"));
+  assert.ok(core.includes("var legacy = readProject(parsed)"));
+  assert.ok(core.includes('"index.html": legacy.html'));
+  assert.ok(core.includes('"styles.css": legacy.css'));
+  assert.ok(core.includes('"app.js": legacy.js'));
 });
 
 test("workspace retains required preview entry files and prevents deleting them", () => {
