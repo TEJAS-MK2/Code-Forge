@@ -456,7 +456,7 @@
     var savedFontSize=Number(localStorage.getItem("code-forge-font-size")||12);
     if([11,12,13,14,16,18].includes(savedFontSize))editorHost.style.setProperty("--cf-editor-font-size",savedFontSize+"px");
     var savedWrap=localStorage.getItem("code-forge-word-wrap")!=="false";
-    engineExtensions[3]=wrappingCompartment.of(savedWrap?Engine.EditorView.lineWrapping:[]);
+    engineExtensions[4]=wrappingCompartment.of(savedWrap?Engine.EditorView.lineWrapping:[]);
   }catch(e){}
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
   editor.setAttribute("aria-label","Code editor content");

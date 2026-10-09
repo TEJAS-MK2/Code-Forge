@@ -458,3 +458,10 @@ test("malformed stored workspaces are copied to a recovery key before normal sav
   assert.match(app, /Export preserved recovery copy/);
   assert.match(app, /The invalid workspace backup could not be preserved locally/);
 });
+
+test("saved word-wrap preference configures its own compartment without replacing the language mode", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /languageCompartment\.of\(languageExtension\(activeFile\)\),wrappingCompartment\.of\(Engine\.lineWrapping\),indentCompartment\.of/);
+  assert.match(app, /engineExtensions\[4\]=wrappingCompartment\.of\(savedWrap\?Engine\.EditorView\.lineWrapping:\[\]\)/);
+  assert.doesNotMatch(app, /engineExtensions\[3\]=wrappingCompartment\.of/);
+});
