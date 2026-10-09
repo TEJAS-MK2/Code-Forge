@@ -20,7 +20,7 @@ test("creates a head when an HTML document has none", () => {
 test("wraps HTML fragments in a valid document", () => {
   const result = Core.buildDocument("<h1>Fragment</h1>", "h1 { color: teal; }", "", "test-channel");
   assert.match(result, /<!doctype html>/i);
-  assert.match(result, /<body><h1>Fragment<\/h1><\/body>/);
+  assert.match(result, /<body><h1>Fragment<\/h1><script>/);
   assert.match(result, /color: teal/);
   assert.equal((result.match(/id="code-forge-user-styles"/g) || []).length, 1);
 });
