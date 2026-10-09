@@ -281,7 +281,7 @@
   }
   var searchMatches=[],searchMatchIndex=-1;
   function searchPattern(query,options) {
-    var escaped=String(query).replace(/[.*+?^\${}()|[\]\\]/g,"\\$&");
+    var escaped=String(query).replace(/[.*+?^$()|[\]\\]/g,function(char){return "\\"+char;});
     var source=options&&options.wholeWord?"(^|[^A-Za-z0-9_])("+escaped+")(?=$|[^A-Za-z0-9_])":escaped;
     return new RegExp(source,"g"+(options&&options.caseSensitive?"":"i")+(options&&options.wholeWord?"m":""));
   }
