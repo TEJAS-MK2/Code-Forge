@@ -376,6 +376,7 @@
     engineExtensions[3]=wrappingCompartment.of(savedWrap?Engine.EditorView.lineWrapping:[]);
   }catch(e){}
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
+  editorHost.addEventListener("keydown",function(event){emit("keydown",event);});
   setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
   editor.addEventListener("input",function(){

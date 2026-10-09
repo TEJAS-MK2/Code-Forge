@@ -254,3 +254,9 @@ test("console entries include timestamps and aggregate runtime error counts", ()
   assert.match(app, /0 errors · 0 warnings/);
   assert.match(css, /\.console-time/);
 });
+
+test("CodeMirror keyboard events reach registered app shortcuts", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /editorHost\.addEventListener\("keydown",function\(event\)\{emit\("keydown",event\);\}\)/);
+  assert.match(app, /Ctrl\+Shift\+P|event\.key\.toLowerCase\(\)==="p"/);
+});
