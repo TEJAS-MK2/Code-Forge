@@ -45,11 +45,11 @@ The repository includes Node.js regression tests for document generation, missin
 
 Run locally with Node.js 20 or newer:
 
-\`\`\`sh
+```sh
 node --check core.js
 node --check app.js
 node --test tests/*.test.cjs
-\`\`\`
+```
 
 GitHub Actions runs these checks before publishing the site to GitHub Pages.
 
