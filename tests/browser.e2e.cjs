@@ -284,7 +284,11 @@ async function main() {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     const invalidStoredWorkspace = JSON.stringify({ format: "code-forge-workspace", version: 99, files: {} });
-    await page.addInitScript(() => localStorage.setItem("code-forge-workspace-v2", '{"format":"code-forge-workspace","version":99,"files":{}}'));
+    await page.addInitScript(() => {
+      if (window.top === window) {
+        localStorage.setItem("code-forge-workspace-v2", '{"format":"code-forge-workspace","version":99,"files":{}}');
+      }
+    });
     await page.reload({ waitUntil: "load" });
     await page.locator("#editorHost .cm-editor").waitFor({ state: "visible", timeout: 15000 });
     assert.equal(await page.evaluate(() => localStorage.getItem("code-forge-recovery-backup-v1")), invalidStoredWorkspace);
