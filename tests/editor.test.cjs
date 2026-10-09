@@ -28,7 +28,7 @@ test("installs runtime diagnostics before user JavaScript", () => {
   const result = Core.buildDocument("<html><head></head><body></body></html>", "", "console.log('hello');", "channel-123");
   assert.ok(result.indexOf("window.addEventListener('error'") < result.indexOf("console.log('hello');"));
   assert.match(result, /__codeForge:channel/);
-  assert.match(result, /sandbox/ === null ? /x/ : /<script>/);
+  assert.match(result, /<script>\s*\(function\(\)/);
 });
 
 test("escapes closing script sequences in user JavaScript", () => {
