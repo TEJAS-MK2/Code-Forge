@@ -23,10 +23,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Install build dependencies
+          node-version: 22
+      - name: Install build and test dependencies
         run: npm install --no-package-lock --no-audit --no-fund
-      - name: Verify required application files
+      - name: Verify required application, test and community files
         run: |
           test -s index.html
           test -s styles.css
@@ -35,8 +35,25 @@ jobs:
           test -s src/editor.js
           test -s scripts/build.cjs
           test -s tests/editor.test.cjs
-      - name: Verify static asset and preview configuration
+          test -s tests/core.persistence.test.cjs
+          test -s tests/community.test.cjs
+          test -s tests/browser.e2e.cjs
+          test -s README.md
+          test -s CONTRIBUTING.md
+          test -s SECURITY.md
+          test -s .github/ISSUE_TEMPLATE/config.yml
+          test -s .github/ISSUE_TEMPLATE/bug_report.yml
+          test -s .github/ISSUE_TEMPLATE/feature_request.yml
+          test -s .github/ISSUE_TEMPLATE/question.yml
+      - name: Verify issue forms and preview security configuration
         run: |
+          grep -q '^blank_issues_enabled: false$' .github/ISSUE_TEMPLATE/config.yml
+          grep -q '^name:' .github/ISSUE_TEMPLATE/bug_report.yml
+          grep -q '^body:' .github/ISSUE_TEMPLATE/bug_report.yml
+          grep -q '^name:' .github/ISSUE_TEMPLATE/feature_request.yml
+          grep -q '^body:' .github/ISSUE_TEMPLATE/feature_request.yml
+          grep -q '^name:' .github/ISSUE_TEMPLATE/question.yml
+          grep -q '^body:' .github/ISSUE_TEMPLATE/question.yml
           grep -q 'href="./styles.css"' index.html
           grep -q 'src="./editor.bundle.js"' index.html
           grep -q 'src="./core.js"' index.html
@@ -51,6 +68,7 @@ jobs:
           node --check core.js
           node --check app.js
           node --check scripts/build.cjs
+          node --check tests/browser.e2e.cjs
       - name: Build the local-first static site
         run: npm run build
       - name: Verify production bundle
@@ -61,8 +79,12 @@ jobs:
           test -s dist/app.js
           test -s dist/editor.bundle.js
           grep -q 'editor.bundle.js' dist/index.html
-      - name: Run regression tests
+      - name: Run unit and repository regression tests
         run: npm test
+      - name: Install Chromium for browser regression tests
+        run: npx playwright install --with-deps chromium
+      - name: Run end-to-end browser checks
+        run: npm run test:e2e
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact

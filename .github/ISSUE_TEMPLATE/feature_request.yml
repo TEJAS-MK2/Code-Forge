@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a focused improvement to the Code Forge workflow.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Explain the user problem first. Code Forge is intentionally static and local-first; avoid including private project data.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I checked existing issues and the README for this feature.
+          required: true
+        - label: This request does not require cloud authentication or cloud project storage.
+          required: false
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem should this solve?
+      description: Describe the current limitation and who it affects.
+      placeholder: I am trying to...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Explain the smallest useful version of the feature.
+      placeholder: It would help if Code Forge...
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What workarounds have you tried?
+    validations:
+      required: false
+  - type: textarea
+    id: considerations
+    attributes:
+      label: UX, accessibility or privacy considerations
+      description: Mention mobile layouts, keyboard use, data safety or performance if relevant.
+    validations:
+      required: false

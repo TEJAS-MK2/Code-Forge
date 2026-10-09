@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the documentation
+    url: https://github.com/TEJAS-MK2/Code-Forge#readme
+    about: Find setup instructions, keyboard shortcuts, data behavior and testing guidance.
+  - name: Report a security vulnerability privately
+    url: https://github.com/TEJAS-MK2/Code-Forge/security/policy
+    about: Read the security policy for private disclosure instructions. Do not post vulnerability details in a public issue.

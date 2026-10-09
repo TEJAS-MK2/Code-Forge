@@ -1,0 +1,32 @@
+name: Question or support
+description: Ask for help using Code Forge or setting up local development.
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For bugs, use the Bug report form. For security issues, follow SECURITY.md and do not include sensitive details in a public issue.
+  - type: textarea
+    id: question
+    attributes:
+      label: What do you need help with?
+      placeholder: Describe your question and goal.
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: Include relevant steps or command output, with private values removed.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser/OS or Node.js and npm versions, as appropriate.
+      placeholder: "Chrome on Android; Node.js 22"
+    validations:
+      required: false

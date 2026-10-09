@@ -5,7 +5,8 @@
   "description": "Local-first HTML, CSS and JavaScript browser editor",
   "scripts": {
     "build": "node scripts/build.cjs",
-    "test": "node --test tests/*.test.cjs"
+    "test": "node --test tests/*.test.cjs",
+    "test:e2e": "node tests/browser.e2e.cjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
@@ -13,5 +14,8 @@
     "@codemirror/lang-javascript": "^6.2.4",
     "codemirror": "6.0.2",
     "esbuild": "^0.25.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0"
   }
 }

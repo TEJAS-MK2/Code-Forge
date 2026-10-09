@@ -21,5 +21,7 @@
 - Added a tested storage writer that distinguishes primary workspace failures from failures of the legacy compatibility mirror, with quota-failure recovery tests.
 - Addressed accessibility-audit findings with a main heading, toolbar landmark, named editor textbox, adjustable separator values, keyboard-navigable output tabs, and higher-contrast editor/interface text.
 - Added startup recovery protection for malformed stored workspaces: preserve raw backup locally before overwriting, expose a recovery export command, and block writes if preservation fails.
-
 - Hardened narrow-screen sizing across the main flex container, IDE workspace, CodeMirror scroller and preview panes to prevent intrinsic editor widths from expanding the document.
+- Added Chromium end-to-end checks for preview JavaScript, editor input, autosave/reload, workspace backup downloads, layout controls and 390px/320px responsive widths.
+- Added browser-local storage failure tests, required contribution and security-policy guidance, and structured bug, feature and support issue forms.
+- Updated CI to use Node.js 22 and require the production build, unit suite and Chromium end-to-end suite to pass before deployment.
