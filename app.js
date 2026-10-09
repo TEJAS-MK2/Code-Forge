@@ -20,6 +20,7 @@
   var consoleCount = document.getElementById("consoleCount");
   var editorHost = document.getElementById("editorHost");
   var languageCompartment = new Engine.Compartment();
+  var wrappingCompartment = new Engine.Compartment();
   var editorView;
   var layout = "split";
   var sideView = "explorer";
@@ -199,7 +200,7 @@
       sidePanelBody.append(settings);
       var indent=settings.querySelector("#indentSetting");try{indent.value=localStorage.getItem("code-forge-indent")||"2";}catch(e){}
       indent.addEventListener("change",function(){try{localStorage.setItem("code-forge-indent",indent.value);}catch(e){}document.getElementById("indentLabel").textContent=indent.value==="tab"?"Tabs":"Spaces: "+indent.value;});
-      settings.querySelector("#wrapSetting").addEventListener("change",function(e){editorView.dispatch({effects:Engine.EditorView.lineWrapping.of(e.target.checked)});});
+      settings.querySelector("#wrapSetting").addEventListener("change",function(e){editorView.dispatch({effects:wrappingCompartment.reconfigure(e.target.checked?Engine.lineWrapping:[])});});
       return;
     }
     var root=document.createElement("div");root.className="explorer-tree";
@@ -309,7 +310,7 @@
   document.querySelectorAll(".rail-button").forEach(function(button){button.addEventListener("click",function(){switchSideView(button.dataset.view);});});
   document.getElementById("newFile").addEventListener("click",newFile);
   document.getElementById("collapseExplorer").addEventListener("click",function(){sidePanel.classList.toggle("is-collapsed");});
-  var engineExtensions=[Engine.basicSetup,Engine.theme,languageCompartment.of(languageExtension(activeFile)),Engine.EditorView.updateListener.of(function(update){if(update.docChanged)emit("input");if(update.selectionSet||update.docChanged)emit("select");})];
+  var engineExtensions=[Engine.basicSetup,Engine.theme,languageCompartment.of(languageExtension(activeFile)),wrappingCompartment.of(Engine.lineWrapping),Engine.EditorView.updateListener.of(function(update){if(update.docChanged)emit("input");if(update.selectionSet||update.docChanged)emit("select");})];
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
   setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
@@ -326,16 +327,38 @@
     else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="n"){event.preventDefault();newFile();}
   });
   function commandPalette() {
-    var actions=["Run preview","New file","Search files","Export workspace backup","Switch to Explorer","Switch to Settings"];
-    var answer=prompt("COMMAND PALETTE\n"+actions.map(function(a,i){return (i+1)+". "+a;}).join("\n")+"\n\nEnter a number or command name:");
-    if(!answer)return;var v=answer.trim().toLowerCase();
-    if(v==="1"||v==="run preview")renderPreview(true);
-    else if(v==="2"||v==="new file")newFile();
-    else if(v==="3"||v==="search files")switchSideView("search");
-    else if(v==="4"||v==="export workspace backup")exportWorkspace();
-    else if(v==="5"||v==="switch to explorer")switchSideView("explorer");
-    else if(v==="6"||v==="switch to settings")switchSideView("settings");
-    else say("Command not found.");
+    var old=document.getElementById("commandOverlay");if(old){old.remove();return;}
+    var commands=[
+      {name:"Run preview",hint:"Ctrl + Enter",run:function(){renderPreview(true);}},
+      {name:"Create new file",hint:"Ctrl + N",run:newFile},
+      {name:"Search in files",hint:"Explorer search",run:function(){switchSideView("search");}},
+      {name:"Export workspace backup",hint:"JSON",run:exportWorkspace},
+      {name:"Open Explorer",hint:"Activity bar",run:function(){switchSideView("explorer");}},
+      {name:"Open editor settings",hint:"Indentation and wrapping",run:function(){switchSideView("settings");}},
+      {name:"Focus editor",hint:"",run:function(){editor.focus();}},
+      {name:"Reset starter workspace",hint:"Destructive",run:function(){document.getElementById("reset").click();}}
+    ];
+    var overlay=document.createElement("div");overlay.id="commandOverlay";overlay.className="command-overlay";
+    var dialog=document.createElement("section");dialog.className="command-dialog";dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");dialog.setAttribute("aria-label","Command palette");
+    var input=document.createElement("input");input.className="command-input";input.placeholder="Type a command…";input.setAttribute("aria-label","Filter commands");
+    var list=document.createElement("div");list.className="command-list";
+    dialog.append(input,list);overlay.append(dialog);document.body.append(overlay);
+    function render(){
+      list.replaceChildren();var filtered=commands.filter(function(c){return c.name.toLowerCase().includes(input.value.toLowerCase());});
+      if(!filtered.length){var empty=document.createElement("p");empty.className="command-empty";empty.textContent="No matching commands";list.append(empty);return;}
+      filtered.forEach(function(command,index){var button=document.createElement("button");button.type="button";button.className="command-option";if(index===0)button.classList.add("is-selected");
+        var name=document.createElement("span");name.textContent=command.name;var hint=document.createElement("small");hint.textContent=command.hint;button.append(name,hint);
+        button.addEventListener("click",function(){overlay.remove();command.run();});list.append(button);});
+    }
+    input.addEventListener("input",render);
+    input.addEventListener("keydown",function(event){
+      var options=Array.from(list.querySelectorAll(".command-option")),current=options.findIndex(function(b){return b.classList.contains("is-selected");});
+      if(event.key==="ArrowDown"||event.key==="ArrowUp"){event.preventDefault();if(!options.length)return;if(current>=0)options[current].classList.remove("is-selected");var next=(current+(event.key==="ArrowDown"?1:-1)+options.length)%options.length;options[next].classList.add("is-selected");options[next].scrollIntoView({block:"nearest"});}
+      else if(event.key==="Enter"){event.preventDefault();var selected=options.find(function(b){return b.classList.contains("is-selected");});if(selected)selected.click();}
+      else if(event.key==="Escape"){overlay.remove();editor.focus();}
+    });
+    overlay.addEventListener("mousedown",function(event){if(event.target===overlay){overlay.remove();editor.focus();}});
+    render();input.focus();
   }
   document.getElementById("run").addEventListener("click",function(){clearTimeout(previewTimer);renderPreview(true);});
   document.getElementById("refresh").addEventListener("click",function(){clearTimeout(previewTimer);renderPreview(true);});

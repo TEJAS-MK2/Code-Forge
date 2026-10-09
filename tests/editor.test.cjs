@@ -135,7 +135,7 @@ test("IDE workspace includes local explorer, file search, tabs and truthful pane
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
   for (const token of ['id="ideLayout"', 'id="sidePanel"', 'id="fileTabs"', 'data-view="explorer"', 'data-view="search"']) assert.ok(html.includes(token), token);
-  for (const token of ["code-forge-workspace-v2", "function newFile()", "function renameFile(", "function deleteFile(", "function searchFiles(", "function commandPalette()", "panelMode === \\"problems\\""]) assert.ok(app.includes(token), token);
+  for (const token of ["code-forge-workspace-v2", "function newFile()", "function renameFile(", "function deleteFile(", "function searchFiles(", "function commandPalette()", "if(panelMode==="problems")"]) assert.ok(app.includes(token), token);
   assert.ok(css.includes(".activity-rail"));
   assert.ok(css.includes(".tree-file"));
 });
@@ -153,4 +153,20 @@ test("workspace retains required preview entry files and prevents deleting them"
   assert.ok(app.includes('["index.html","styles.css","app.js"].includes(name)'));
   assert.ok(app.includes("The three preview entry files are required."));
   assert.ok(app.includes('Core.buildDocument(files["index.html"],files["styles.css"],files["app.js"]'));
+});
+
+
+test("word-wrap setting uses a CodeMirror compartment rather than a nonexistent editor facet", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const editorSource = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(editorSource, /import \{ lineWrapping \} from "@codemirror\/view"/);
+  assert.match(app, /wrappingCompartment\.reconfigure\(e\.target\.checked\?Engine\.lineWrapping:\[\]\)/);
+});
+
+test("command palette is an accessible filterable dialog, not a browser prompt", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /className="command-overlay"/);
+  assert.match(app, /setAttribute\("aria-modal","true"\)/);
+  assert.match(app, /ArrowDown/);
+  assert.doesNotMatch(app, /prompt\("COMMAND PALETTE/);
 });

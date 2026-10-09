@@ -216,3 +216,13 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
  .panel-tabs{order:0}
  .console-heading>#clearConsole{order:1}
 }
+
+.command-overlay{position:fixed;z-index:20;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:12vh 16px 24px;background:#070907b8;backdrop-filter:blur(3px)}
+.command-dialog{width:min(560px,100%);max-height:min(70vh,620px);overflow:hidden;border:1px solid #50584b;border-radius:9px;background:#1a1e19;box-shadow:0 24px 80px #0009}
+.command-input{display:block;width:100%;padding:15px 16px;border:0;border-bottom:1px solid var(--line);outline:0;background:#171a16;color:var(--ink);font-size:13px}
+.command-list{max-height:calc(min(70vh,620px) - 52px);overflow:auto;padding:6px}
+.command-option{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;padding:11px 10px;border:0;border-radius:5px;background:transparent;color:var(--ink);text-align:left;font-size:12px}
+.command-option small{color:var(--subtle);font-size:10px}
+.command-option:hover,.command-option.is-selected{background:#2b3327}
+.command-empty{padding:12px;color:var(--muted);font-size:12px}
+@media(max-width:760px){.command-overlay{padding-top:7vh}.command-option{padding:13px 10px}}
