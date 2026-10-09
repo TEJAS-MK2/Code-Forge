@@ -2,6 +2,9 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const Core = require("../core.js");
+const fs = require("node:fs");
+const path = require("node:path");
+const root = path.join(__dirname, "..");
 
 test("injects CSS into a complete HTML document head", () => {
   const result = Core.buildDocument("<!doctype html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>", "h1 { color: red; }", "", "test-channel");
@@ -56,4 +59,18 @@ test("normalizes documents that omit the html root but include head or body", ()
   assert.match(result, /<!doctype html>\s*<html lang="en">/);
   assert.match(result, /<head><title>Short form<\/title><style id="code-forge-user-styles">/);
   assert.match(result, /<body><p>Content<\/p>/);
+});
+
+test("exposes all workspace layouts and persists the user's choice", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  for (const mode of ["split", "stack", "editor", "preview"]) {
+    assert.match(html, new RegExp('data-layout="' + mode + '"'));
+    assert.match(css, new RegExp("workspace\\\\.layout-" + mode));
+  }
+  assert.match(html, /role="group" aria-label="Workspace layout"/);
+  assert.match(app, /function setLayout\\(nextLayout\\)/);
+  assert.match(app, /localStorage\\.setItem\\("code-forge-layout-v1", layout\\)/);
+  assert.match(app, /button\\.setAttribute\\("aria-pressed"/);
 });
