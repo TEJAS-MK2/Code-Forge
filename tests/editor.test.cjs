@@ -160,7 +160,8 @@ test("word-wrap setting uses a CodeMirror compartment rather than a nonexistent 
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const editorSource = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
   assert.match(editorSource, /EditorView\.theme/);
-  assert.match(app, /wrappingCompartment\.reconfigure\(e\.target\.checked\?Engine\.EditorView\.lineWrapping:\[\]\)/);
+  assert.match(app, /wrappingCompartment\.reconfigure\(wrapSetting\.checked\?Engine\.EditorView\.lineWrapping:\[\]\)/);
+  assert.match(app, /localStorage\.setItem\("code-forge-word-wrap",String\(enabled\)\)/);
 });
 
 test("command palette is an accessible filterable dialog, not a browser prompt", () => {
