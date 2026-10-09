@@ -250,8 +250,8 @@ test("console entries include timestamps and aggregate runtime error counts", ()
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
   assert.match(app, /className="console-time"/);
-  assert.match(app, /consoleErrors\+\+/);
-  assert.match(app, /0 errors · 0 warnings/);
+  assert.match(app, /consoleHistory\.filter\(function\(entry\)\{return entry\.level==="error";\}\)\.length/);
+  assert.match(app, /consoleWarnings\+" warnings"/);
   assert.match(css, /\.console-time/);
 });
 

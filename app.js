@@ -164,7 +164,7 @@
     consoleCount.textContent=consoleLines+(consoleLines===1?" entry":" entries")+" · "+consoleErrors+" errors · "+consoleWarnings+" warnings";
     consoleOutput.scrollTop=consoleOutput.scrollHeight;
   }
-  function clearConsole() {consoleHistory=[];renderConsoleHistory();}
+  function clearConsole() {consoleHistory=[];consoleErrors=0;consoleWarnings=0;consoleLines=0;consoleCount.textContent="0 entries · 0 errors · 0 warnings";if(panelMode==="console")renderConsoleHistory();}
   function addConsoleLine(level,message) {
     consoleHistory.push({level:["log","info","warn","error","debug","system"].indexOf(level)>=0?level:"log",message:String(message),time:new Date().toLocaleTimeString()});
     if(consoleHistory.length>500)consoleHistory=consoleHistory.slice(-500);
