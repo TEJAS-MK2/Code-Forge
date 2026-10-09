@@ -209,7 +209,7 @@ async function main() {
       return dialog.accept(answer);
     };
     page.on("dialog", answerDialogs);
-    const liveEditor = page.locator("#editorHost .cm-content[contenteditable=\\"true\\"]");
+    const liveEditor = page.locator('#editorHost .cm-content[contenteditable="true"]');
     await liveEditor.click();
     await page.keyboard.press("Control+A");
     await page.keyboard.insertText("unsaved before duplicate");
