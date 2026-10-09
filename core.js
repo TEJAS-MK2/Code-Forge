@@ -32,16 +32,14 @@
     var runtime = [
       "(function(){",
       "var channel=" + channelLiteral + ";",
-      "function send(level,args){try{parent.postMessage({__codeForge:channel,level:level,message:Array.prototype.map.call(args,function(v){if(typeof v==='string')return v;try{return JSON.stringify(v,function(k,x){return typeof x==='bigint'?String(x)+'n':x;});}catch(e){return String(v);}}).join(' ' ).slice(0,3000)},'*');}catch(e){}}",
+      "function send(level,args){try{parent.postMessage({__codeForge:channel,level:level,message:Array.prototype.map.call(args,function(v){if(typeof v==='string')return v;try{return JSON.stringify(v,function(k,x){return typeof x==='bigint'?String(x)+'n':x;});}catch(e){return String(v);}}).join(' ').slice(0,3000)},'*');}catch(e){}}",
       "['log','info','warn','error','debug'].forEach(function(level){var original=console[level]&&console[level].bind(console);console[level]=function(){send(level,arguments);if(original)original.apply(null,arguments);};});",
       "window.addEventListener('error',function(e){send('error',[e.message+' ('+e.lineno+':'+e.colno+')']);});",
       "window.addEventListener('unhandledrejection',function(e){send('error',['Unhandled promise rejection:',e.reason]);});",
       "send('system',['Preview started']);",
-      "})();",
-      "\n",
-      safeScript(js)
+      "})();"
     ].join("\n");
-    var scriptTag = "<script>\n" + runtime + "\n</script>";
+    var scriptTag = "<script>\n" + runtime + "\n</script>\n<script>\n" + safeScript(js) + "\n</script>";
     if (/<\/body\s*>/i.test(source)) {
       source = source.replace(/<\/body\s*>/i, scriptTag + "\n</body>");
     } else if (/<\/html\s*>/i.test(source)) {
