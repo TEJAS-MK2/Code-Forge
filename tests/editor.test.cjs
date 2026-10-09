@@ -49,3 +49,10 @@ test("rejects malformed project files", () => {
   assert.equal(Core.validProject({ html: "", css: "", js: "" }), true);
   assert.equal(Core.validProject({ html: "", css: 7, js: "" }), false);
 });
+
+test("normalizes documents that omit the html root but include head or body", () => {
+  const result = Core.buildDocument("<head><title>Short form</title></head><body><p>Content</p></body>", "p { color: purple; }", "", "test-channel");
+  assert.match(result, /<!doctype html>\s*<html lang="en">/);
+  assert.match(result, /<head><title>Short form<\/title><style id="code-forge-user-styles">/);
+  assert.match(result, /<body><p>Content<\/p>/);
+});
