@@ -61,7 +61,7 @@ async function main() {
     const address = server.address();
     const origin = `http://127.0.0.1:${address.port}`;
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
     const page = await context.newPage();
     page.on("pageerror", error => errors.push(error.message));
 
@@ -112,6 +112,55 @@ async function main() {
     assert.ok(editorText.includes("Saved live"), "Reload should restore the saved document.");
     console.log("PASS: project content survives a browser reload in the same profile");
 
+    const importedSource = '<!doctype html><html lang="en"><head><title>Imported workspace</title></head><body><h1 id="imported">Imported backup</h1></body></html>';
+    const importedWorkspace = {
+      format: "code-forge-workspace",
+      version: 2,
+      files: {
+        "index.html": importedSource,
+        "styles.css": "#imported { color: rgb(12, 34, 56); }",
+        "app.js": "console.log('imported workspace');",
+        "notes.md": "Imported virtual file."
+      }
+    };
+    const importDialog = page.waitForEvent("dialog").then(dialog => dialog.accept());
+    await page.locator("#importFile").setInputFiles({
+      name: "e2e-workspace.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(importedWorkspace))
+    });
+    await importDialog;
+    await page.waitForFunction(expected => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("code-forge-workspace-v2") || "null");
+        return !!saved && saved.files && saved.files["index.html"] === expected.html &&
+          saved.files["notes.md"] === expected.note;
+      } catch {
+        return false;
+      }
+    }, { html: importedSource, note: "Imported virtual file." }, { timeout: 7000 });
+    await preview.locator("#imported").waitFor({ state: "visible", timeout: 10000 });
+    assert.equal(await preview.locator("#imported").textContent(), "Imported backup");
+    assert.equal(await preview.locator("#imported").evaluate(element => getComputedStyle(element).color), "rgb(12, 34, 56)");
+    console.log("PASS: validated workspace import replaces the project and rebuilds HTML/CSS preview");
+
+    const createFileDialog = page.waitForEvent("dialog").then(dialog => {
+      assert.equal(dialog.type(), "prompt");
+      return dialog.accept("e2e-notes.md");
+    });
+    await page.locator("#newFile").click();
+    await createFileDialog;
+    await page.waitForFunction(() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("code-forge-workspace-v2") || "null");
+        return !!saved && saved.files && saved.files["e2e-notes.md"] === "";
+      } catch {
+        return false;
+      }
+    }, null, { timeout: 7000 });
+    await page.locator("#fileTabs").getByRole("tab").filter({ hasText: "e2e-notes.md" }).waitFor({ state: "visible" });
+    console.log("PASS: creating and opening a virtual workspace file persists locally");
+
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Backup JSON" }).click()
@@ -120,8 +169,10 @@ async function main() {
     const backup = JSON.parse(fs.readFileSync(downloadPath, "utf8"));
     assert.equal(backup.format, "code-forge-workspace");
     assert.equal(backup.version, 2);
-    assert.equal(backup.files["index.html"], source);
-    console.log("PASS: workspace export downloads the complete JSON backup");
+    assert.equal(backup.files["index.html"], importedSource);
+    assert.equal(backup.files["notes.md"], "Imported virtual file.");
+    assert.equal(backup.files["e2e-notes.md"], "");
+    console.log("PASS: workspace export downloads every file in the local workspace");
 
     await page.getByRole("button", { name: "Stack" }).click();
     assert.equal(await page.getByRole("button", { name: "Stack" }).getAttribute("aria-pressed"), "true");
