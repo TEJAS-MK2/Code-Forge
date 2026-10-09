@@ -283,7 +283,7 @@ async function main() {
     console.log("PASS: document and body stay within 390px and 320px viewports");
 
     const invalidStoredWorkspace = JSON.stringify({ format: "code-forge-workspace", version: 99, files: {} });
-    await page.evaluate(raw => localStorage.setItem("code-forge-workspace-v2", raw), invalidStoredWorkspace);
+    await page.addInitScript(() => localStorage.setItem("code-forge-workspace-v2", '{"format":"code-forge-workspace","version":99,"files":{}}'));
     await page.reload({ waitUntil: "load" });
     await page.locator("#editorHost .cm-editor").waitFor({ state: "visible", timeout: 15000 });
     assert.equal(await page.evaluate(() => localStorage.getItem("code-forge-recovery-backup-v1")), invalidStoredWorkspace);
