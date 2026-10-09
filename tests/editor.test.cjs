@@ -278,3 +278,48 @@ test("console filters preserve history and can show errors only", () => {
   assert.match(app, /else renderConsoleHistory\(\)/);
   assert.match(css, /\.console-filter/);
 });
+
+
+test("workspace backup parser validates every file before accepting the backup", () => {
+  const valid = { format: "code-forge-workspace", version: 2, files: {
+    "index.html": "<h1>Saved</h1>", "styles.css": "h1{color:green}", "app.js": "console.log('ok')", "notes.md": "local note"
+  }};
+  assert.deepEqual({ ...Core.readWorkspace(valid) }, valid.files);
+  assert.deepEqual({ ...Core.readWorkspace(JSON.stringify(valid)) }, valid.files);
+});
+
+test("workspace backup parser rejects malformed containers, versions and missing required files", () => {
+  assert.throws(() => Core.readWorkspace("{broken"), /JSON|position|property/i);
+  assert.throws(() => Core.readWorkspace({ format: "code-forge-workspace", version: 99, files: {} }), /unsupported|invalid format/i);
+  assert.throws(() => Core.readWorkspace({ format: "code-forge-workspace", version: 2, files: [] }), /unsupported|invalid format/i);
+  assert.throws(() => Core.readWorkspace({ format: "code-forge-workspace", version: 2, files: { "index.html": "<p>only</p>" } }), /must include/i);
+});
+
+test("workspace backup parser rejects unsafe names and non-string file contents without partial recovery", () => {
+  const unsafe = { format: "code-forge-workspace", version: 2, files: {
+    "index.html": "<h1>Safe</h1>", "styles.css": "", "app.js": "", "../private.txt": "unsafe"
+  }};
+  assert.throws(() => Core.readWorkspace(unsafe), /Invalid file name/i);
+  const invalidContent = { format: "code-forge-workspace", version: 2, files: {
+    "index.html": "<h1>Safe</h1>", "styles.css": "", "app.js": "", "notes.md": 123
+  }};
+  assert.throws(() => Core.readWorkspace(invalidContent), /Invalid file contents/i);
+});
+
+test("legacy three-file backups remain compatible with strict workspace import", () => {
+  const legacy = { format: "code-forge-project", version: 1, files: { html: "<h1>Legacy</h1>", css: "h1{}", js: "void 0" } };
+  assert.deepEqual({ ...Core.readWorkspace(legacy) }, { "index.html": "<h1>Legacy</h1>", "styles.css": "h1{}", "app.js": "void 0" });
+});
+
+test("failed workspace-wide replacement keeps every file marked as unsaved", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /if\(saved\)dirty=Object\.create\(null\);\s*else Object\.keys\(files\)\.forEach\(function\(name\)\{dirty\[name\]=true;\}\)/);
+  assert.match(app, /Unsaved markers are retained; export a backup/);
+});
+
+test("import validates the full backup before replacing state and preserves unsaved markers on storage failure", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /var next=Core\.readWorkspace\(String\(reader\.result\)\)/);
+  assert.match(app, /if\(!saved\)Object\.keys\(files\)\.forEach\(function\(name\)\{dirty\[name\]=true;\}\)/);
+  assert.match(app, /Workspace imported in memory, but browser storage failed/);
+});

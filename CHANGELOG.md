@@ -9,3 +9,7 @@
 - Added five local starter templates, duplicate-file workflow and import-overwrite confirmation.
 - Added recent-file navigation and timestamped console entries with error/warning counts and an errors-only filter.
 - Expanded regression coverage and updated the project documentation.
+
+- Added strict all-or-nothing workspace backup validation, including file names, content types, supported version and required preview files.
+- Kept unsaved markers visible after failed workspace-wide replacements or imports when browser storage is unavailable.
+- Added regression coverage for malformed workspace backups, unsafe paths, invalid file values and legacy backup compatibility.

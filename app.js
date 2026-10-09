@@ -58,13 +58,10 @@
   }
   function loadFiles() {
     try {
-      var v2 = JSON.parse(localStorage.getItem("code-forge-workspace-v2"));
-      if (v2 && v2.format === "code-forge-workspace" && v2.files && typeof v2.files === "object") {
-        var valid = {};
-        Object.keys(v2.files).forEach(function (name) {
-          if (safeName(name) && typeof v2.files[name] === "string") valid[name] = v2.files[name];
-        });
-        if (valid["index.html"] && valid["styles.css"] != null && valid["app.js"] != null) return valid;
+      var v2 = localStorage.getItem("code-forge-workspace-v2");
+      if (v2) {
+        try { return Core.readWorkspace(v2); }
+        catch (invalidWorkspace) { saveState("Workspace backup needs recovery",false); }
       }
       var old = JSON.parse(localStorage.getItem("code-forge-project-v1"));
       if (Core.validProject(old)) return {"index.html":old.html,"styles.css":old.css,"app.js":old.js};
@@ -298,9 +295,12 @@
     if(!confirm("Replace "+count+" occurrence"+(count===1?"":"s")+" across all workspace files? This cannot be undone."))return;
     Object.keys(files).forEach(function(name){files[name]=files[name].split(query).join(replacement);});
     switchingFile=true;editor.value=files[activeFile];switchingFile=false;
-    var saved=persist(true);dirty=Object.create(null);renderTabs();renderExplorer();updateCursor();
+    var saved=persist(true);
+    if(saved)dirty=Object.create(null);
+    else Object.keys(files).forEach(function(name){dirty[name]=true;});
+    renderTabs();renderExplorer();updateCursor();
     if(["index.html","styles.css","app.js"].includes(activeFile))renderPreview(false);
-    say(saved?"Replaced "+count+" occurrence"+(count===1?"":"s")+" across the workspace.":"Replacement applied, but storage failed. Export a backup.");
+    say(saved?"Replaced "+count+" occurrence"+(count===1?"":"s")+" across the workspace.":"Replacement applied in memory, but storage failed. Unsaved markers are retained; export a backup.");
   }
   function fileMenu(name) {
     if(["index.html","styles.css","app.js"].includes(name)){say("Core preview files cannot be renamed or deleted.");return;}
@@ -366,16 +366,14 @@
     var reader=new FileReader();
     reader.onload=function(){
       try {
-        var parsed=JSON.parse(String(reader.result)),next={};
-        if(parsed&&parsed.format==="code-forge-workspace"&&parsed.files&&typeof parsed.files==="object"){
-          Object.keys(parsed.files).forEach(function(name){if(!safeName(name)||typeof parsed.files[name]!=="string")throw new Error("Invalid file in workspace backup: "+name);next[name]=parsed.files[name];});
-        } else {
-          var legacy=Core.readProject(parsed);next={"index.html":legacy.html,"styles.css":legacy.css,"app.js":legacy.js};
-        }
-        if(!next["index.html"]||next["styles.css"]==null||next["app.js"]==null)throw new Error("Backup must include index.html, styles.css and app.js.");
+        var next=Core.readWorkspace(String(reader.result));
+        clearTimeout(saveTimer);clearTimeout(previewTimer);
         files=next;dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";
         switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
-        persist(true);renderTabs();renderExplorer();updateCursor();renderPreview(false);say("Workspace imported");
+        var saved=persist(true);
+        if(!saved)Object.keys(files).forEach(function(name){dirty[name]=true;});
+        renderTabs();renderExplorer();updateCursor();renderPreview(false);
+        say(saved?"Workspace imported and saved on this device.":"Workspace imported in memory, but browser storage failed. Export a backup before leaving.");
       }catch(e){say(e.message||"Could not read this workspace backup.");}
     };
     reader.onerror=function(){say("Could not read that file.");};reader.readAsText(file);

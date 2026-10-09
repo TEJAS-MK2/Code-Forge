@@ -75,5 +75,33 @@
     return { html: files.html, css: files.css, js: files.js };
   }
 
-  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject };
+  function safeWorkspaceName(name) {
+    return typeof name === "string" && name.length > 0 && name.length <= 64 &&
+      /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name) && name !== "." && name !== "..";
+  }
+
+  function readWorkspace(value) {
+    var parsed = typeof value === "string" ? JSON.parse(value) : value;
+    if (parsed && parsed.format === "code-forge-workspace") {
+      if (parsed.version !== 2 || !parsed.files || typeof parsed.files !== "object" || Array.isArray(parsed.files)) {
+        throw new Error("This workspace backup has an unsupported or invalid format.");
+      }
+      var names = Object.keys(parsed.files);
+      if (names.length > 500) throw new Error("This workspace backup contains too many files (maximum 500).");
+      var next = Object.create(null);
+      names.forEach(function (name) {
+        if (!safeWorkspaceName(name)) throw new Error("Invalid file name in workspace backup: " + name);
+        if (typeof parsed.files[name] !== "string") throw new Error("Invalid file contents in workspace backup: " + name);
+        next[name] = parsed.files[name];
+      });
+      if (!next["index.html"] || next["styles.css"] == null || next["app.js"] == null) {
+        throw new Error("Backup must include index.html, styles.css and app.js.");
+      }
+      return next;
+    }
+    var legacy = readProject(parsed);
+    return { "index.html": legacy.html, "styles.css": legacy.css, "app.js": legacy.js };
+  }
+
+  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace };
 });

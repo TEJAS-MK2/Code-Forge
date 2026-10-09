@@ -10,7 +10,7 @@ A small, local-first browser workspace for writing HTML, CSS and JavaScript. No 
 - **Live preview:** changes refresh the preview automatically; use **Run** or **Ctrl/⌘ + Enter** to run immediately. Switch between desktop, tablet and phone viewport widths.
 - **Runtime console:** view timestamped console output, warnings and JavaScript runtime errors with aggregate error/warning counts, filter to errors, and keep console history when switching bottom panels.
 - **Local autosave:** your current project is saved to this browser's localStorage.
-- **Portable workspace backup:** export/import JSON backups containing all workspace files. Older three-file backups remain supported.
+- **Portable workspace backup:** export/import JSON backups containing all workspace files. Older three-file backups remain supported. Imports validate the complete file list and required preview files before replacing the current workspace; if localStorage fails, unsaved markers remain visible and the app recommends exporting a backup.
 - **Standalone HTML export:** download a single HTML file with your HTML, CSS and JavaScript combined.
 - **IDE workspace:** activity rail, file explorer, tabs, recent files, duplicate-file action, unsaved indicators, workspace-wide text search and confirmed replace, editor settings and a command palette (Ctrl/⌘ + Shift + P).
 - **CodeMirror 6 editor:** syntax highlighting for HTML, CSS and JavaScript, line numbers, bracket matching, code folding, completion, search and undo/redo. Built-in landing page, portfolio, contact form, animated card and click-counter templates are available in the command palette.
@@ -44,7 +44,7 @@ Project content stays in browser-local storage unless you choose to export it or
 
 ## Tests
 
-The repository includes Node.js regression tests for document generation, missing head handling, fragment wrapping, runtime diagnostics, script-tag escaping and project backup round-tripping.
+The repository includes Node.js regression tests for document generation, runtime diagnostics, workspace backup validation (including malformed data and unsafe filenames), legacy import compatibility, local-save failure indicators and IDE wiring.
 
 Run locally with Node.js 20 or newer:
 
