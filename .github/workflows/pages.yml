@@ -3,6 +3,8 @@ name: Validate and deploy Code Forge
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 # Keep the default token read-only. Deployment-only permissions are granted to the deploy job.
@@ -10,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: github-pages
+  group: code-forge-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -42,6 +44,7 @@ jobs:
           test -s README.md
           test -s CONTRIBUTING.md
           test -s SECURITY.md
+          test -s .github/dependabot.yml
           test -s .github/ISSUE_TEMPLATE/config.yml
           test -s .github/ISSUE_TEMPLATE/bug_report.yml
           test -s .github/ISSUE_TEMPLATE/feature_request.yml
@@ -93,6 +96,7 @@ jobs:
         with:
           path: dist
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
