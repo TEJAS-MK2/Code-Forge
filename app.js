@@ -264,11 +264,12 @@
   });
 
   var resizing = false;
-  var startRatio = 0.5;
+  var resizeRatio = 0.5;
   function resizeAt(clientX) {
     var rect = workspace.getBoundingClientRect();
     var ratio = (clientX - rect.left) / rect.width;
     ratio = Math.max(0.25, Math.min(0.75, ratio));
+    resizeRatio = ratio;
     workspace.style.gridTemplateColumns = "minmax(0, " + (ratio * 100) + "fr) 8px minmax(0, " + ((1 - ratio) * 100) + "fr)";
   }
   var handle = document.getElementById("resizeHandle");
@@ -276,7 +277,7 @@
     if (window.matchMedia("(max-width: 760px)").matches) return;
     resizing = true;
     var rect = workspace.getBoundingClientRect();
-    startRatio = (event.clientX - rect.left) / rect.width;
+    resizeRatio = (event.clientX - rect.left) / rect.width;
     handle.setPointerCapture(event.pointerId);
     event.preventDefault();
   });
@@ -289,8 +290,7 @@
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
       var rect = workspace.getBoundingClientRect();
-      var current = workspace.style.gridTemplateColumns ? parseFloat(workspace.style.gridTemplateColumns.split(" ")[2]) / 100 : startRatio;
-      resizeAt(rect.left + rect.width * Math.max(.25, Math.min(.75, current + (event.key === "ArrowLeft" ? -.03 : .03))));
+      resizeAt(rect.left + rect.width * Math.max(.25, Math.min(.75, resizeRatio + (event.key === "ArrowLeft" ? -.03 : .03))));
     }
   });
 })();
