@@ -74,3 +74,12 @@ test("exposes all workspace layouts and persists the user's choice", () => {
   assert.ok(app.includes('localStorage.setItem("code-forge-layout-v1", layout)'));
   assert.ok(app.includes('button.setAttribute("aria-pressed"'));
 });
+
+test("every static application element reference exists in the HTML", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
+  const referencedIds = [...app.matchAll(/getElementById\("([^"]+)"\)/g)].map(match => match[1]);
+  const missing = [...new Set(referencedIds.filter(id => !ids.has(id)))];
+  assert.deepEqual(missing, [], "Application references missing DOM elements");
+});
