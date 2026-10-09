@@ -1,4 +1,4 @@
-name: Deploy Code Forge to GitHub Pages
+name: Validate and deploy Code Forge
 
 on:
   push:
@@ -20,10 +20,35 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Configure Pages
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify required application files
+        run: |
+          test -s index.html
+          test -s styles.css
+          test -s core.js
+          test -s app.js
+          test -s tests/editor.test.cjs
+      - name: Verify static asset and preview configuration
+        run: |
+          grep -q 'href="./styles.css"' index.html
+          grep -q 'src="./core.js"' index.html
+          grep -q 'src="./app.js"' index.html
+          grep -q 'sandbox="allow-scripts"' index.html
+          if grep -q 'allow-same-origin' index.html; then
+            echo "Preview must not receive same-origin privileges"
+            exit 1
+          fi
+      - name: Check JavaScript syntax
+        run: |
+          node --check core.js
+          node --check app.js
+      - name: Run regression tests
+        run: node --test tests/*.test.cjs
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-      - name: Validate site entry point
-        run: test -s index.html
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -31,7 +56,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: \${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
