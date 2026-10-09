@@ -282,6 +282,7 @@ async function main() {
     }
     console.log("PASS: document and body stay within 390px and 320px viewports");
 
+    await page.setViewportSize({ width: 1280, height: 900 });
     const invalidStoredWorkspace = JSON.stringify({ format: "code-forge-workspace", version: 99, files: {} });
     await page.addInitScript(() => localStorage.setItem("code-forge-workspace-v2", '{"format":"code-forge-workspace","version":99,"files":{}}'));
     await page.reload({ waitUntil: "load" });
