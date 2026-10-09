@@ -83,3 +83,15 @@ test("every static application element reference exists in the HTML", () => {
   const missing = [...new Set(referencedIds.filter(id => !ids.has(id)))];
   assert.deepEqual(missing, [], "Application references missing DOM elements");
 });
+
+test("changing layouts clears stale inline resize columns", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.ok(app.includes('workspace.style.removeProperty("grid-template-columns")'));
+});
+
+test("mobile toolbar keeps project actions available", () => {
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.ok(css.includes(".topbar { flex-wrap: wrap; align-items: flex-start;"));
+  assert.ok(css.includes(".top-actions { width: 100%; justify-content: flex-start;"));
+  assert.doesNotMatch(css, /\.top-actions \.optional\s*\{\s*display:\s*none/);
+});
