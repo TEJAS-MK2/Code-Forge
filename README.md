@@ -33,7 +33,7 @@ Requirements: Node.js 22 or newer and npm.
 2. Install development dependencies and build the static site:
 
    ```sh
-   npm install --no-package-lock --no-audit --no-fund
+   npm install --no-package-lock --no-fund
    npm run build
    ```
 
@@ -93,7 +93,7 @@ npm test
 npm run test:e2e
 ```
 
-The end-to-end suite exercises the built app in Chromium, including preview execution, editor changes, local autosave/reload and narrow viewport overflow. GitHub Actions validates pushes and pull requests with syntax checks, a production build, regression tests and Chromium browser checks. Pull requests are never deployed; only a successful run on `main` can publish `dist/` to GitHub Pages. Workflow actions are SHA-pinned, deployment permissions are scoped to the deploy job, and Dependabot checks dependency updates weekly.
+The end-to-end suite exercises the built app in Chromium, including preview execution, editor changes, local autosave/reload and narrow viewport overflow. GitHub Actions validates pushes and pull requests with syntax checks, a production build, regression tests and Chromium browser checks. Pull requests are never deployed; only a successful run on `main` can publish `dist/` to GitHub Pages. Workflow actions are SHA-pinned, deployment permissions are scoped to the deploy job, npm's install-time vulnerability audit remains enabled in CI, and Dependabot checks dependency updates weekly.
 
 - [Latest workflow runs](https://github.com/TEJAS-MK2/Code-Forge/actions)
 - [Open the live app](https://tejas-mk2.github.io/Code-Forge/)
