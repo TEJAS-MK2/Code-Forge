@@ -242,3 +242,6 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .search-workspace .tree-add-file{width:100%;margin:0;text-align:center}
 .search-workspace input{min-height:35px}
 @media(max-width:430px){.preview-toolbar{align-items:flex-start;flex-direction:column}.preview-toolbar .button-group{width:100%;flex-wrap:wrap}.preview-device{max-width:100%}}
+
+.console-time{flex:0 0 auto;color:var(--subtle);font-size:9px;padding-top:2px}
+.console-line{align-items:flex-start}

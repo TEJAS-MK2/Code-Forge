@@ -142,18 +142,22 @@
   }
   function buildChannel() { runId++; return "cf-"+Date.now().toString(36)+"-"+runId.toString(36)+"-"+Math.random().toString(36).slice(2,9); }
   function clearConsole() {
-    consoleOutput.replaceChildren(); consoleLines=0; consoleCount.textContent="0 entries";
+    consoleOutput.replaceChildren(); consoleLines=0;consoleErrors=0;consoleWarnings=0;consoleCount.textContent="0 entries · 0 errors · 0 warnings";
     var empty=document.createElement("div");empty.className="console-empty";empty.id="consoleEmpty";
     empty.textContent="Console output and runtime errors will appear here.";consoleOutput.appendChild(empty);
   }
+  var consoleErrors=0,consoleWarnings=0;
   function addConsoleLine(level,message) {
     var empty=document.getElementById("consoleEmpty");if(empty)empty.remove();
     var row=document.createElement("div");row.className="console-line";
     row.dataset.level=["log","info","warn","error","debug","system"].indexOf(level)>=0?level:"log";
+    var time=document.createElement("span");time.className="console-time";time.textContent=new Date().toLocaleTimeString();
     var tag=document.createElement("span");tag.className="console-level";tag.textContent=level;
     var msg=document.createElement("span");msg.className="console-message";msg.textContent=String(message);
-    row.append(tag,msg);consoleOutput.appendChild(row);consoleLines++;
-    consoleCount.textContent=consoleLines+(consoleLines===1?" entry":" entries");consoleOutput.scrollTop=consoleOutput.scrollHeight;
+    row.append(time,tag,msg);consoleOutput.appendChild(row);consoleLines++;
+    if(level==="error")consoleErrors++;if(level==="warn")consoleWarnings++;
+    consoleCount.textContent=consoleLines+(consoleLines===1?" entry":" entries")+" · "+consoleErrors+" errors · "+consoleWarnings+" warnings";
+    consoleOutput.scrollTop=consoleOutput.scrollHeight;
   }
   function renderPreview(announce) {
     rememberEditor();persist(false);currentChannel=buildChannel();clearConsole();
@@ -264,12 +268,11 @@
   function replaceAllFiles(query,replacement) {
     query=String(query||"");replacement=String(replacement==null?"":replacement);
     if(!query){say("Enter text to find first.");return;}
-    rememberEditor();var count=0;
-    Object.keys(files).forEach(function(name){
-      var parts=files[name].split(query);
-      if(parts.length>1){count+=parts.length-1;files[name]=parts.join(replacement);}
-    });
+    rememberEditor();
+    var count=Object.keys(files).reduce(function(total,name){return total+(files[name].split(query).length-1);},0);
     if(!count){say("No matches to replace.");return;}
+    if(!confirm("Replace "+count+" occurrence"+(count===1?"":"s")+" across all workspace files? This cannot be undone."))return;
+    Object.keys(files).forEach(function(name){files[name]=files[name].split(query).join(replacement);});
     switchingFile=true;editor.value=files[activeFile];switchingFile=false;
     var saved=persist(true);dirty=Object.create(null);renderTabs();renderExplorer();updateCursor();
     if(["index.html","styles.css","app.js"].includes(activeFile))renderPreview(false);
@@ -277,9 +280,10 @@
   }
   function fileMenu(name) {
     if(["index.html","styles.css","app.js"].includes(name)){say("Core preview files cannot be renamed or deleted.");return;}
-    var action=prompt("File actions for "+name+": type rename or delete","rename");if(!action)return;
+    var action=prompt("File actions for "+name+": type rename, duplicate or delete","rename");if(!action)return;
     if(action.toLowerCase()==="delete")deleteFile(name);
     else if(action.toLowerCase()==="rename")renameFile(name);
+    else if(action.toLowerCase()==="duplicate")duplicateFile(name);
   }
   function newFile() {
     var name=prompt("New file name (for example, notes.md or helper.js)");if(!name)return;
@@ -287,6 +291,17 @@
     if(!safeName(name)){say("Use 1–64 letters, numbers, dots, underscores or hyphens. No folders.");return;}
     if(files[name]!=null){say("A file with that name already exists.");return;}
     files[name]="";dirty[name]=false;persist(true);openFile(name);renderExplorer();say("Created "+name);
+  }
+  function duplicateFile(sourceName) {
+    if(files[sourceName]==null)return;
+    var suggestion=sourceName.replace(/(\.[^.]+)?$/, "-copy$1");
+    var name=prompt("Duplicate "+sourceName+" as:",suggestion);
+    if(!name)return;name=name.trim();
+    if(!safeName(name)){say("That file name is not supported.");return;}
+    if(files[name]!=null){say("A file with that name already exists.");return;}
+    files[name]=files[sourceName];dirty[name]=false;openFiles.push(name);
+    if(!persist(true)){delete files[name];openFiles=openFiles.filter(function(n){return n!==name;});return;}
+    openFile(name);renderExplorer();say("Duplicated "+sourceName+" as "+name);
   }
   function renameFile(oldName) {
     var name=prompt("Rename "+oldName+" to:",oldName);if(!name||name===oldName)return;name=name.trim();
@@ -319,7 +334,9 @@
     say("Workspace backup downloaded");
   }
   function importWorkspace(file) {
-    if(!file)return;var reader=new FileReader();
+    if(!file)return;
+    if(!confirm("Importing this backup replaces every file in the current local workspace. Export a backup first if you need the current version."))return;
+    var reader=new FileReader();
     reader.onload=function(){
       try {
         var parsed=JSON.parse(String(reader.result)),next={};
@@ -377,6 +394,16 @@
     else if((event.ctrlKey||event.metaKey)&&event.shiftKey&&event.key.toLowerCase()==="p"){event.preventDefault();commandPalette();}
     else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="n"){event.preventDefault();newFile();}
   });
+  var TEMPLATES={"Landing page":{"index.html":"<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Launch page</title></head><body><main class=\"hero\"><p class=\"eyebrow\">BUILT WITH CODE FORGE</p><h1>Make something <span>remarkable.</span></h1><p class=\"lead\">A clear message, thoughtful design, and a page that loads fast.</p><a class=\"cta\" href=\"#details\">Explore the idea</a></main><section id=\"details\"><h2>Made for the next step</h2><p>Replace this copy with your product, project or idea.</p></section></body></html>","styles.css":"*{box-sizing:border-box}body{margin:0;background:#f3f2ec;color:#20241e;font-family:Inter,system-ui,sans-serif}.hero{min-height:78vh;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(28px,8vw,110px);background:radial-gradient(circle at 80% 20%,#d8e9c9,transparent 35%)}.eyebrow{font-size:12px;letter-spacing:.16em;font-weight:800;color:#526b3e}h1{max-width:900px;font-size:clamp(44px,8vw,100px);line-height:.98;letter-spacing:-.065em;margin:18px 0}h1 span{color:#5d7c43}.lead{max-width:550px;color:#5b6255;line-height:1.8}.cta{margin-top:20px;padding:13px 18px;border-radius:6px;background:#b8e986;color:#182012;text-decoration:none;font-weight:750}section{padding:50px clamp(28px,8vw,110px)}","app.js":"document.querySelector('.cta')?.addEventListener('click', () => console.log('Thanks for exploring the page.'));"},"Portfolio":{"index.html":"<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Your Portfolio</title></head><body><header><a class=\"brand\" href=\"#\">YOUR NAME<span>.</span></a><nav><a href=\"#work\">Work</a><a href=\"#about\">About</a><a href=\"#contact\">Contact</a></nav></header><main><p class=\"eyebrow\">DESIGN · CODE · CURIOSITY</p><h1>Building useful things for the <span>real world.</span></h1><p class=\"intro\">I turn ideas into fast, thoughtful digital experiences.</p><a class=\"button\" href=\"#work\">View selected work ↓</a></main><section id=\"work\"><h2>Selected work</h2><article><small>PROJECT 01</small><h3>Project name</h3><p>What you built, why it matters, and what you learned.</p></article></section><section id=\"about\"><h2>About</h2><p>A short introduction goes here.</p></section><section id=\"contact\"><h2>Let's talk</h2><a href=\"mailto:hello@example.com\">hello@example.com</a></section></body></html>","styles.css":"*{box-sizing:border-box}body{margin:0;background:#111410;color:#e8ebe3;font-family:Inter,system-ui,sans-serif}header{display:flex;justify-content:space-between;align-items:center;padding:24px clamp(20px,6vw,80px);border-bottom:1px solid #2c3228}a{color:inherit;text-decoration:none}nav{display:flex;gap:22px;color:#a8b09f;font-size:13px}.brand{font-weight:850;letter-spacing:.04em}.brand span,main h1 span{color:#b8e986}.eyebrow{color:#b8e986;letter-spacing:.18em;font-size:11px;font-weight:800}main{min-height:70vh;padding:clamp(32px,9vw,120px) clamp(20px,10vw,140px);display:flex;align-items:flex-start;flex-direction:column;justify-content:center}h1{max-width:950px;font-size:clamp(44px,8vw,104px);line-height:.98;letter-spacing:-.065em;margin:18px 0}.intro{max-width:560px;color:#a8b09f;line-height:1.8}.button{margin-top:18px;padding:12px 16px;border:1px solid #59644e;border-radius:5px;color:#dce4d5}section{padding:48px clamp(20px,10vw,140px);border-top:1px solid #2c3228}article{max-width:600px;padding:24px;border:1px solid #2c3228;border-radius:8px}article small{color:#b8e986}p{line-height:1.8;color:#a8b09f}@media(max-width:500px){header{align-items:flex-start;gap:14px;flex-direction:column}nav{gap:15px}}","app.js":"document.querySelectorAll('nav a').forEach(link => link.addEventListener('click', () => console.log('Navigating to', link.getAttribute('href'))));"},"Contact form":{"index.html":"<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Contact us</title></head><body><main class=\"form-card\"><p class=\"eyebrow\">SAY HELLO</p><h1>What’s on your mind?</h1><p>Use this front-end form as a starting point. It does not send data to a server.</p><form id=\"contactForm\"><label>Name<input name=\"name\" required autocomplete=\"name\"></label><label>Email<input name=\"email\" type=\"email\" required autocomplete=\"email\"></label><label>Message<textarea name=\"message\" rows=\"5\" required></textarea></label><button>Preview submission</button><p id=\"formStatus\" aria-live=\"polite\"></p></form></main></body></html>","styles.css":"*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:#e9ede4;color:#20241e;font-family:Inter,system-ui,sans-serif}.form-card{width:min(640px,100%);padding:clamp(22px,5vw,48px);border:1px solid #d4dacd;border-radius:12px;background:#fafbf8;box-shadow:0 18px 60px #28331d12}.eyebrow{color:#597a42;font-size:11px;font-weight:800;letter-spacing:.16em}h1{font-size:clamp(32px,6vw,52px);letter-spacing:-.05em;line-height:1.05}p{color:#62685d;line-height:1.7}form,label{display:flex;flex-direction:column;gap:8px}form{gap:16px;margin-top:24px}label{font-size:13px;font-weight:700}input,textarea{width:100%;padding:12px;border:1px solid #cbd2c3;border-radius:6px;background:white;color:#20241e;font:inherit}button{padding:12px 16px;border:0;border-radius:6px;background:#b8e986;color:#182012;font-weight:800;cursor:pointer}#formStatus{min-height:1.5em}","app.js":"document.querySelector('#contactForm')?.addEventListener('submit', event => { event.preventDefault(); const data = new FormData(event.currentTarget); document.querySelector('#formStatus').textContent = 'Preview only: ready to send a message from ' + data.get('name') + '. No data was uploaded.'; console.info('Form preview completed; no network request was made.'); });"},"Animated card":{"index.html":"<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Motion study</title></head><body><main><article class=\"motion-card\" tabindex=\"0\"><p class=\"eyebrow\">MOTION STUDY / 001</p><h1>Small details.<br><span>Better feel.</span></h1><p>Hover, focus or tap the card to explore a little motion.</p><button id=\"motionButton\">Change state</button><p id=\"motionState\" aria-live=\"polite\">Idle state</p></article></main></body></html>","styles.css":"*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#141713;color:#e8ebe3;font-family:Inter,system-ui,sans-serif}main{min-height:100vh;display:grid;place-items:center;padding:24px}.motion-card{width:min(620px,100%);padding:clamp(26px,6vw,58px);border:1px solid #414a38;border-radius:16px;background:linear-gradient(140deg,#252c21,#191d18);box-shadow:0 25px 80px #0005;transition:transform .28s ease,border-color .28s ease,box-shadow .28s ease}.motion-card:hover,.motion-card:focus-visible{transform:translateY(-7px) rotateX(1deg);border-color:#b8e986;box-shadow:0 32px 90px #0008}.eyebrow{font-size:10px;letter-spacing:.18em;color:#b8e986;font-weight:800}h1{font-size:clamp(40px,8vw,76px);line-height:1;letter-spacing:-.06em}h1 span{color:#b8e986}p{color:#a8b09f;line-height:1.8}button{padding:12px 16px;border:0;border-radius:6px;background:#b8e986;color:#182012;font-weight:800;cursor:pointer}@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}","app.js":"let active = false; document.querySelector('#motionButton')?.addEventListener('click', () => { active = !active; document.querySelector('#motionState').textContent = active ? 'Active state' : 'Idle state'; console.log('Motion state: ' + (active ? 'active' : 'idle')); });"},"Click counter game":{"index.html":"<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Click Sprint</title></head><body><main class=\"game\"><p class=\"eyebrow\">MINI GAME</p><h1>Click sprint</h1><p>How many clicks can you land? Your score stays in this page session only.</p><div class=\"score\" id=\"score\">0</div><button id=\"clicker\">Click me</button><button id=\"resetScore\" class=\"secondary\">Reset score</button><p id=\"gameMessage\" aria-live=\"polite\">Ready when you are.</p></main></body></html>","styles.css":"*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;background:#e9ede4;color:#20241e;font-family:Inter,system-ui,sans-serif}.game{width:min(540px,100%);padding:clamp(24px,6vw,52px);border:1px solid #d1d8c9;border-radius:14px;background:#fbfcf9;text-align:center;box-shadow:0 22px 70px #1d291412}.eyebrow{color:#5a7942;font-size:11px;letter-spacing:.17em;font-weight:850}.game h1{font-size:clamp(38px,8vw,64px);letter-spacing:-.06em;margin:12px 0}.game p{color:#646b5f;line-height:1.7}.score{font:800 clamp(56px,12vw,90px)/1 ui-monospace,monospace;margin:28px 0;color:#56783b}button{padding:12px 18px;margin:4px;border:0;border-radius:6px;background:#b8e986;color:#182012;font-weight:800;cursor:pointer}.secondary{border:1px solid #d1d8c9;background:transparent;color:#41483b}","app.js":"let score = 0; const scoreNode = document.querySelector('#score'); document.querySelector('#clicker')?.addEventListener('click', () => { score += 1; scoreNode.textContent = String(score); document.querySelector('#gameMessage').textContent = score + ' click' + (score === 1 ? '' : 's') + ' so far.'; }); document.querySelector('#resetScore')?.addEventListener('click', () => { score = 0; scoreNode.textContent = '0'; document.querySelector('#gameMessage').textContent = 'Ready when you are.'; });"}};
+  function applyTemplate(name) {
+    var template=TEMPLATES[name];if(!template)return;
+    if(!confirm('Load the '+name+' template? This replaces all three preview files in your current local workspace.'))return;
+    clearTimeout(saveTimer);clearTimeout(previewTimer);
+    files=Object.assign({},template);dirty=Object.create(null);openFiles=['index.html','styles.css','app.js'];activeFile='index.html';
+    switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
+    var saved=persist(true);renderTabs();renderExplorer();updateCursor();renderPreview(false);
+    say(saved?name+' template loaded.':'Template loaded in memory; export a backup because browser storage failed.');
+  }
   function commandPalette() {
     var old=document.querySelector("#commandOverlay");if(old){old.remove();return;}
     var commands=[
@@ -386,9 +413,11 @@
       {name:"Export workspace backup",hint:"JSON",run:exportWorkspace},
       {name:"Open Explorer",hint:"Activity bar",run:function(){switchSideView("explorer");}},
       {name:"Open editor settings",hint:"Indentation and wrapping",run:function(){switchSideView("settings");}},
+      {name:"Duplicate active file",hint:"Workspace",run:function(){duplicateFile(activeFile);}},
       {name:"Focus editor",hint:"",run:function(){editor.focus();}},
       {name:"Reset starter workspace",hint:"Destructive",run:function(){document.getElementById("reset").click();}}
     ];
+    Object.keys(TEMPLATES).forEach(function(name){commands.push({name:"Template: "+name,hint:"Replace preview files",run:function(){applyTemplate(name);}});});
     var overlay=document.createElement("div");overlay.id="commandOverlay";overlay.className="command-overlay";
     var dialog=document.createElement("section");dialog.className="command-dialog";dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");dialog.setAttribute("aria-label","Command palette");
     var input=document.createElement("input");input.className="command-input";input.placeholder="Type a command…";input.setAttribute("aria-label","Filter commands");

@@ -238,3 +238,19 @@ test("clear and trim operations refresh saved indicators consistently", () => {
   assert.match(app, /editor\.value="";markCurrentFileSaved\(\)/);
   assert.match(app, /editor\.value=after;markCurrentFileSaved\(\)/);
 });
+
+test("starter templates and duplicate-file workflows are discoverable from the command palette", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  for (const name of ["Landing page", "Portfolio", "Contact form", "Animated card", "Click counter game"]) assert.ok(app.includes('"'+name+'"'), name);
+  assert.match(app, /function applyTemplate\(name\)/);
+  assert.match(app, /function duplicateFile\(sourceName\)/);
+  assert.match(app, /name:"Duplicate active file"/);
+});
+test("console entries include timestamps and aggregate runtime error counts", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(app, /className="console-time"/);
+  assert.match(app, /consoleErrors\+\+/);
+  assert.match(app, /0 errors · 0 warnings/);
+  assert.match(css, /\.console-time/);
+});
