@@ -3,9 +3,6 @@
 ## 2026-10-09
 
 - Re-enabled npm's install-time vulnerability audit in CI and aligned contributor setup commands so dependency advisories are visible instead of being suppressed.
-
-## 2026-10-09
-
 - Hardened GitHub Actions with immutable SHA-pinned actions and least-privilege deployment permissions.
 - Added weekly Dependabot checks and pull-request CI that validates changes without deploying pull request code.
 
