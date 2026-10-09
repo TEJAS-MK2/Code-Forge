@@ -95,3 +95,36 @@ test("mobile toolbar keeps project actions available", () => {
   assert.ok(css.includes(".top-actions { width: 100%; justify-content: flex-start;"));
   assert.doesNotMatch(css, /\.top-actions \.optional\s*\{\s*display:\s*none/);
 });
+
+
+test("CodeMirror 6 is wired as the editor with all three web languages", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const editorSource = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  assert.match(html, /id="editorHost"/);
+  assert.match(html, /src="\.\/editor\.bundle\.js"/);
+  assert.match(app, /Engine\.EditorView/);
+  assert.match(editorSource, /@codemirror\/lang-html/);
+  assert.match(editorSource, /@codemirror\/lang-css/);
+  assert.match(editorSource, /@codemirror\/lang-javascript/);
+  assert.ok(pkg.scripts.build);
+  assert.ok(pkg.dependencies.codemirror);
+});
+
+test("CodeMirror editor theme includes line numbers, completion and keyboard-friendly setup", () => {
+  const source = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(source, /basicSetup/);
+  assert.match(source, /EditorView\.theme/);
+  assert.match(source, /caretColor/);
+  assert.match(source, /cm-tooltip-autocomplete/);
+});
+
+test("production build copies static app assets and bundles editor locally", () => {
+  const build = fs.readFileSync(path.join(root, "scripts/build.cjs"), "utf8");
+  const workflow = fs.readFileSync(path.join(root, ".github/workflows/pages.yml"), "utf8");
+  assert.match(build, /outfile: path\.join\(dist, "editor\.bundle\.js"\)/);
+  assert.match(build, /"index\.html", "styles\.css", "core\.js", "app\.js"/);
+  assert.match(workflow, /npm install/);
+  assert.match(workflow, /path: dist/);
+});

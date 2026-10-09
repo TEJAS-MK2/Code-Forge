@@ -1,21 +1,22 @@
 (function () {
   "use strict";
   var Core = window.CodeForgeCore;
+  var Engine = window.CodeForgeEditorEngine;
   if (!Core) throw new Error("Code Forge core failed to load.");
+  if (!Engine || !Engine.EditorView || !Engine.Compartment) throw new Error("Code Forge editor engine failed to load.");
+
   var START = {
     html: '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>My first page</title>\n</head>\n<body>\n  <main class="card">\n    <p class="eyebrow">A SMALL START</p>\n    <h1>Make it <span>yours.</span></h1>\n    <p>Edit the files, run your code, and see the result here.</p>\n    <button id="hello">Try the button</button>\n    <p id="message" aria-live="polite"></p>\n  </main>\n</body>\n</html>',
     css: '* { box-sizing: border-box; }\nbody {\n  margin: 0;\n  min-height: 100vh;\n  display: grid;\n  place-items: center;\n  padding: 24px;\n  background: #f2f0e9;\n  color: #20241e;\n  font-family: system-ui, sans-serif;\n}\n.card { max-width: 560px; }\n.eyebrow { color: #526b3e; letter-spacing: .14em; font-size: 12px; font-weight: 700; }\nh1 { font-size: clamp(2.5rem, 8vw, 4.5rem); line-height: 1.02; letter-spacing: -.06em; }\nh1 span { color: #55763b; }\np { color: #62685d; line-height: 1.7; }\nbutton { padding: 11px 16px; border: 0; border-radius: 6px; background: #b8e986; color: #182012; font-weight: 700; cursor: pointer; }',
     js: "document.querySelector('#hello')?.addEventListener('click', () => {\n  document.querySelector('#message').textContent = 'Your JavaScript is running.';\n  console.log('Button clicked');\n});"
   };
-  var KEYS = ["html", "css", "js"];
   var active = "html";
   var project = loadProject();
   var saveTimer = null;
   var previewTimer = null;
   var toastTimer = null;
   var runId = 0;
-  var editor = document.getElementById("editor");
-  var gutter = document.getElementById("gutter");
+  var editorHost = document.getElementById("editorHost");
   var frame = document.getElementById("preview");
   var consoleOutput = document.getElementById("consoleOutput");
   var consoleCount = document.getElementById("consoleCount");
@@ -23,6 +24,35 @@
   var currentChannel = "";
   var workspace = document.getElementById("workspace");
   var layout = "split";
+  var listeners = Object.create(null);
+  var languageCompartment = new Engine.Compartment();
+  var editorView;
+
+  function languageFor(name) {
+    return name === "css" ? Engine.css() : name === "js" ? Engine.javascript() : Engine.html();
+  }
+  function emit(type, event) {
+    (listeners[type] || []).slice().forEach(function (callback) { callback(event); });
+  }
+  var editor = {
+    get value() { return editorView.state.doc.toString(); },
+    set value(value) {
+      value = String(value == null ? "" : value);
+      var current = editorView.state.doc.toString();
+      if (current === value) return;
+      editorView.dispatch({ changes: { from: 0, to: editorView.state.doc.length, insert: value } });
+    },
+    get selectionStart() { return editorView.state.selection.main.head; },
+    get selectionEnd() { return editorView.state.selection.main.anchor; },
+    get scrollTop() { return editorView.scrollDOM.scrollTop; },
+    set scrollTop(value) { editorView.scrollDOM.scrollTop = value; },
+    addEventListener: function (type, callback) {
+      if (!listeners[type]) listeners[type] = [];
+      listeners[type].push(callback);
+    },
+    setAttribute: function (name, value) { editorView.contentDOM.setAttribute(name, value); },
+    focus: function () { editorView.focus(); }
+  };
 
   function readLayout() {
     try {
@@ -76,13 +106,11 @@
     }
   }
   function updateCursor() {
-    var before = editor.value.slice(0, editor.selectionStart);
-    var row = before.split("\n");
-    document.getElementById("cursor").textContent = "Ln " + row.length + ", Col " + (row[row.length - 1].length + 1);
-    var count = editor.value.split("\n").length;
-    gutter.textContent = Array.from({ length: count }, function (_, index) { return index + 1; }).join("\n");
-    gutter.scrollTop = editor.scrollTop;
-    document.getElementById("charCount").textContent = editor.value.length.toLocaleString() + " chars";
+    var doc = editorView.state.doc;
+    var position = editorView.state.selection.main.head;
+    var line = doc.lineAt(position);
+    document.getElementById("cursor").textContent = "Ln " + line.number + ", Col " + (position - line.from + 1);
+    document.getElementById("charCount").textContent = doc.length.toLocaleString() + " chars";
   }
   function clearConsole() {
     consoleOutput.replaceChildren();
@@ -128,14 +156,16 @@
     if (announce) say("Preview refreshed");
   }
   function setTab(language) {
+    if (["html", "css", "js"].indexOf(language) === -1 || language === active) return;
     rememberEditor();
     active = language;
+    editorView.dispatch({ effects: languageCompartment.reconfigure(languageFor(active)) });
     editor.value = project[active];
     document.querySelectorAll(".tab").forEach(function (tab) {
       tab.setAttribute("aria-selected", String(tab.dataset.lang === active));
     });
     document.getElementById("languageLabel").textContent = ({ html: "HTML document", css: "CSS stylesheet", js: "JavaScript source" })[active];
-    editor.setAttribute("aria-label", ({ html: "HTML editor", css: "CSS editor", js: "JavaScript editor" })[active]);
+    editor.setAttribute("aria-label", ({ html: "HTML editor", css: "CSS editor", js: "JavaScript editor" })[active];
     updateCursor();
     editor.focus();
   }
@@ -159,6 +189,7 @@
         editor.value = project[active];
         updateCursor();
         persist(true);
+        window.clearTimeout(previewTimer);
         renderPreview(false);
         say("Project imported");
       } catch (error) {
@@ -169,6 +200,24 @@
     reader.readAsText(file);
   }
 
+  editorView = new Engine.EditorView({
+    parent: editorHost,
+    doc: project[active],
+    extensions: [
+      Engine.basicSetup,
+      languageCompartment.of(languageFor(active)),
+      Engine.EditorView.updateListener.of(function (update) {
+        if (update.docChanged) emit("input");
+        if (update.selectionSet || update.docChanged) emit("select");
+      }),
+      Engine.EditorView.domEventHandlers({
+        keydown: function (event) { emit("keydown", event); return event.defaultPrevented; },
+        click: function (event) { emit("click", event); return false; },
+        keyup: function (event) { emit("keyup", event); return false; }
+      })
+    ]
+  });
+
   document.querySelectorAll(".tab").forEach(function (tab) {
     tab.addEventListener("click", function () { setTab(tab.dataset.lang); });
   });
@@ -176,7 +225,6 @@
   document.querySelectorAll(".layout-button").forEach(function (button) {
     button.addEventListener("click", function () { setLayout(button.dataset.layout); });
   });
-  editor.value = project[active];
   updateCursor();
   clearConsole();
   renderPreview(false);
@@ -190,7 +238,6 @@
     window.clearTimeout(previewTimer);
     previewTimer = window.setTimeout(function () { renderPreview(false); }, 500);
   });
-  editor.addEventListener("scroll", function () { gutter.scrollTop = editor.scrollTop; });
   editor.addEventListener("click", updateCursor);
   editor.addEventListener("keyup", updateCursor);
   editor.addEventListener("select", updateCursor);
@@ -203,10 +250,6 @@
       event.preventDefault();
       persist(true);
       say("Saved in this browser");
-    } else if (event.key === "Tab") {
-      event.preventDefault();
-      editor.setRangeText("  ", editor.selectionStart, editor.selectionEnd, "end");
-      editor.dispatchEvent(new Event("input"));
     }
   });
   document.getElementById("run").addEventListener("click", function () {
@@ -222,6 +265,7 @@
     rememberEditor();
     updateCursor();
     persist(false);
+    window.clearTimeout(previewTimer);
     renderPreview(false);
     editor.focus();
     say("Current file cleared");
@@ -231,6 +275,7 @@
     rememberEditor();
     updateCursor();
     persist(false);
+    window.clearTimeout(previewTimer);
     renderPreview(false);
     say("Trailing whitespace removed");
   });
@@ -240,6 +285,7 @@
     editor.value = project[active];
     updateCursor();
     persist(false);
+    window.clearTimeout(previewTimer);
     renderPreview(false);
     say("Starter project restored");
   });

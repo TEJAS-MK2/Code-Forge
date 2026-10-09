@@ -24,16 +24,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Install build dependencies
+        run: npm install --no-package-lock --no-audit --no-fund
       - name: Verify required application files
         run: |
           test -s index.html
           test -s styles.css
           test -s core.js
           test -s app.js
+          test -s src/editor.js
+          test -s scripts/build.cjs
           test -s tests/editor.test.cjs
       - name: Verify static asset and preview configuration
         run: |
           grep -q 'href="./styles.css"' index.html
+          grep -q 'src="./editor.bundle.js"' index.html
           grep -q 'src="./core.js"' index.html
           grep -q 'src="./app.js"' index.html
           grep -q 'sandbox="allow-scripts"' index.html
@@ -45,14 +50,25 @@ jobs:
         run: |
           node --check core.js
           node --check app.js
+          node --check scripts/build.cjs
+      - name: Build the local-first static site
+        run: npm run build
+      - name: Verify production bundle
+        run: |
+          test -s dist/index.html
+          test -s dist/styles.css
+          test -s dist/core.js
+          test -s dist/app.js
+          test -s dist/editor.bundle.js
+          grep -q 'editor.bundle.js' dist/index.html
       - name: Run regression tests
-        run: node --test tests/*.test.cjs
+        run: npm test
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
   deploy:
     environment:
       name: github-pages

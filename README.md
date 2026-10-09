@@ -13,12 +13,13 @@ A small, local-first browser workspace for writing HTML, CSS and JavaScript. No 
 - **Portable project backup:** export and import a JSON project file to move work between browsers or devices.
 - **Standalone HTML export:** download a single HTML file with your HTML, CSS and JavaScript combined.
 - **Flexible workspace:** switch between side-by-side, stacked, editor-focus and preview-focus layouts. The editor/preview split is resizable on desktop, and your preferred layout is saved locally.
+- **CodeMirror 6 editor:** syntax highlighting for HTML, CSS and JavaScript, line numbers, bracket matching, code folding, completion, search and undo/redo.
 - **Keyboard and accessibility basics:** keyboard shortcuts, visible focus styles, labeled editor controls and reduced-motion support.
-- **No build step:** plain HTML, CSS and JavaScript, with no third-party runtime dependency.
+- **Local static bundle:** the editor libraries are bundled into the published site; no CDN, application backend or runtime package download is needed.
 
 ## Getting started
 
-1. Open the [live site](https://tejas-mk2.github.io/Code-Forge/) or open index.html in a modern browser.
+1. Open the [live site](https://tejas-mk2.github.io/Code-Forge/). For local development, install Node.js 20 or newer and run `npm install` followed by `npm run build`, then serve the generated `dist/` folder over HTTP.
 2. Choose the HTML, CSS or JS tab and edit the source.
 3. Check the live preview and console.
 4. Use **Backup JSON** to keep a portable copy of all three source files, or **Download HTML** for a standalone page.
@@ -46,6 +47,8 @@ The repository includes Node.js regression tests for document generation, missin
 Run locally with Node.js 20 or newer:
 
 ```sh
+npm install
+npm run build
 node --check core.js
 node --check app.js
 node --test tests/*.test.cjs
@@ -61,8 +64,10 @@ The main files are:
 - styles.css — responsive visual system.
 - app.js — editor interactions, local persistence, preview and console.
 - core.js — document generation and portable project format.
-- tests/editor.test.cjs — regression tests.
-- .github/workflows/pages.yml — validation and GitHub Pages deployment.
+- src/editor.js — CodeMirror 6 setup, HTML/CSS/JavaScript language support and the editor theme.
+- scripts/build.cjs — builds a self-contained static site into `dist/`.
+- tests/editor.test.cjs — regression tests for document generation and the editor build wiring.
+- .github/workflows/pages.yml — dependency install, build, validation and GitHub Pages deployment.
 
 ## License
 

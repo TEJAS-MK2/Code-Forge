@@ -47,8 +47,7 @@
           </div>
         </div>
         <div class="editor-body">
-          <div class="gutter" id="gutter" aria-hidden="true">1</div>
-          <textarea id="editor" class="editor" aria-label="HTML editor" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" wrap="off"></textarea>
+          <div id="editorHost" class="editor-host" aria-label="Source editor"></div>
         </div>
         <div class="editor-footer">
           <span id="languageLabel">HTML document</span>
@@ -79,6 +78,7 @@
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="./editor.bundle.js"></script>
 <script src="./core.js"></script>
 <script src="./app.js"></script>
 </body>
