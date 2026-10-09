@@ -165,7 +165,7 @@
       tab.setAttribute("aria-selected", String(tab.dataset.lang === active));
     });
     document.getElementById("languageLabel").textContent = ({ html: "HTML document", css: "CSS stylesheet", js: "JavaScript source" })[active];
-    editor.setAttribute("aria-label", ({ html: "HTML editor", css: "CSS editor", js: "JavaScript editor" })[active];
+    editor.setAttribute("aria-label", ({ html: "HTML editor", css: "CSS editor", js: "JavaScript editor" })[active]);
     updateCursor();
     editor.focus();
   }
@@ -205,6 +205,7 @@
     doc: project[active],
     extensions: [
       Engine.basicSetup,
+      Engine.theme,
       languageCompartment.of(languageFor(active)),
       Engine.EditorView.updateListener.of(function (update) {
         if (update.docChanged) emit("input");
