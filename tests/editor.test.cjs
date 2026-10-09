@@ -364,3 +364,16 @@ test("CodeMirror editor setup uses the built-in keyboard and bracket editing too
   assert.match(source, /EditorView/);
   assert.match(source, /@codemirror\/lang-html/);
 });
+
+
+test("template loading preserves unsaved markers when local storage cannot save", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /if\(!saved\)Object\.keys\(files\)\.forEach\(function\(fileName\)\{dirty\[fileName\]=true;\}\)/);
+  assert.match(app, /Unsaved markers are retained; export a backup/);
+});
+
+test("search panel remains mounted after navigating or replacing workspace matches", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /if\(sideView!=="search"\)renderExplorer\(\);updateCursor\(\)/);
+  assert.match(app, /function jumpToSearchMatch\(index\)/);
+});

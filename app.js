@@ -215,7 +215,7 @@
   }
   function closeFile(name) {
     if(["index.html","styles.css","app.js"].includes(name))return;
-    if(dirty[name]) { if(!confirm("Close "+name+"? Its current edits are saved locally."))return; }
+    if(dirty[name]) { if(!confirm("Close "+name+"? It has unsaved changes. Export a backup first if you need to keep them."))return; }
     rememberEditor();openFiles=openFiles.filter(function(n){return n!==name;});
     if(activeFile===name)openFile("index.html");else renderTabs();
   }
@@ -343,7 +343,7 @@
     var saved=persist(true);
     if(saved)dirty=Object.create(null);
     else Object.keys(files).forEach(function(name){dirty[name]=true;});
-    renderTabs();renderExplorer();updateCursor();
+    renderTabs();if(sideView!=="search")renderExplorer();updateCursor();
     if(["index.html","styles.css","app.js"].includes(activeFile))renderPreview(false);
     say(saved?"Replaced "+count+" occurrence"+(count===1?"":"s")+" across the workspace.":"Replacement applied in memory, but storage failed. Unsaved markers are retained; export a backup.");
   }
@@ -421,7 +421,7 @@
         switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
         var saved=persist(true);
         if(!saved)Object.keys(files).forEach(function(name){dirty[name]=true;});
-        renderTabs();renderExplorer();updateCursor();renderPreview(false);
+        renderTabs();if(sideView!=="search")renderExplorer();updateCursor();renderPreview(false);
         say(saved?"Workspace imported and saved on this device.":"Workspace imported in memory, but browser storage failed. Export a backup before leaving.");
       }catch(e){say(e.message||"Could not read this workspace backup.");}
     };
@@ -477,8 +477,9 @@
     clearTimeout(saveTimer);clearTimeout(previewTimer);
     files=Object.assign({},template);dirty=Object.create(null);openFiles=['index.html','styles.css','app.js'];activeFile='index.html';
     switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
-    var saved=persist(true);renderTabs();renderExplorer();updateCursor();renderPreview(false);
-    say(saved?name+' template loaded.':'Template loaded in memory; export a backup because browser storage failed.');
+    var saved=persist(true);if(!saved)Object.keys(files).forEach(function(fileName){dirty[fileName]=true;});
+    renderTabs();renderExplorer();updateCursor();renderPreview(false);
+    say(saved?name+' template loaded and saved on this device.':name+' template loaded in memory, but browser storage failed. Unsaved markers are retained; export a backup.');
   }
   function goToLine() {
     var previous=document.querySelector("#goToLineOverlay");if(previous){previous.remove();}

@@ -16,3 +16,5 @@
 - Added case-sensitive and whole-word workspace search, previous/next match navigation, match positions and clearer result counts.
 - Added mobile overflow constraints and regression checks for narrow layouts while retaining the existing desktop design.
 - Added an accessible Go to Line dialog with line validation and Ctrl/⌘ + G shortcut, also available in the command palette.
+- Preserved search controls and result navigation after opening a match or applying replacements.
+- Kept template files visibly unsaved when local storage fails and clarified the warning shown when closing an unsaved virtual file.
