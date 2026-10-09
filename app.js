@@ -165,6 +165,7 @@
       tab.setAttribute("role","tab");tab.setAttribute("aria-selected",String(name===activeFile));tab.title=name;
       var dot=document.createElement("span");dot.className="file-type-dot type-"+lang(name);dot.setAttribute("aria-hidden","true");
       var title=document.createElement("span");title.className="file-tab-name";title.textContent=name;
+      if(dirty[name]){var modified=document.createElement("span");modified.className="file-tab-dirty";modified.title="Unsaved changes";modified.setAttribute("aria-label","Unsaved changes");tab.append(modified);}
       var close=document.createElement("span");close.className="file-tab-close";close.textContent="×";close.setAttribute("role","button");close.setAttribute("aria-label","Close "+name);
       tab.append(dot,title);
       if(!["index.html","styles.css","app.js"].includes(name)){tab.append(close);close.addEventListener("click",function(e){e.stopPropagation();closeFile(name);});}
@@ -214,7 +215,7 @@
       var dot=document.createElement("span");dot.className="file-type-dot type-"+lang(name);
       var text=document.createElement("span");text.className="tree-file-name";text.textContent=name;
       var state=document.createElement("span");state.className="tree-file-state";state.textContent=dirty[name]?"●":"";
-      item.append(dot,text,state);item.addEventListener("click",function(){openFile(name);});item.addEventListener("contextmenu",function(e){e.preventDefault();fileMenu(name);});root.append(item);
+      item.append(dot,text,state);if(!["index.html","styles.css","app.js"].includes(name)){var actions=document.createElement("button");actions.type="button";actions.className="tree-file-action";actions.textContent="⋯";actions.title="Rename or delete "+name;actions.setAttribute("aria-label","Actions for "+name);actions.addEventListener("click",function(e){e.stopPropagation();fileMenu(name);});item.append(actions);}item.addEventListener("click",function(){openFile(name);});item.addEventListener("contextmenu",function(e){e.preventDefault();fileMenu(name);});root.append(item);
     });
     var add=document.createElement("button");add.className="tree-add-file";add.type="button";add.textContent="+ New file";add.addEventListener("click",newFile);root.append(add);
     var help=document.createElement("p");help.className="tree-help";help.textContent="Virtual files are saved in browser storage. Export a backup to move them to another device.";root.append(help);
@@ -318,7 +319,7 @@
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
   editor.addEventListener("input",function(){
     rememberEditor();dirty[activeFile]=true;saveState("Unsaved changes",false);renderTabs();renderExplorer();updateCursor();
-    clearTimeout(saveTimer);saveTimer=setTimeout(function(){persist(false);dirty[activeFile]=false;renderTabs();renderExplorer();},180);
+    clearTimeout(saveTimer);var changedFile=activeFile;saveTimer=setTimeout(function(){persist(false);dirty[changedFile]=false;renderTabs();renderExplorer();},180);
     clearTimeout(previewTimer);if(["index.html","styles.css","app.js"].includes(activeFile))previewTimer=setTimeout(function(){renderPreview(false);},500);
   });
   editor.addEventListener("select",updateCursor);

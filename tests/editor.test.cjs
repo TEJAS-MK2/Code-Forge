@@ -185,3 +185,19 @@ test("indentation setting updates CodeMirror's actual indent unit", () => {
   assert.match(source, /import \{ indentUnit \} from "@codemirror\/language"/);
   assert.match(app, /indentCompartment\.reconfigure\(Engine\.indentUnit\.of/);
 });
+
+
+test("workspace tabs expose unsaved markers and extra-file actions are accessible", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(app, /className="file-tab-dirty"/);
+  assert.match(app, /className="tree-file-action"/);
+  assert.match(app, /setAttribute\("aria-label","Actions for "\+name\)/);
+  assert.match(css, /\.file-tab-dirty/);
+  assert.match(css, /\.tree-file-action/);
+});
+
+test("debounced save clears the file that changed even after switching tabs", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /var changedFile=activeFile;saveTimer=setTimeout\(function\(\)\{persist\(false\);dirty\[changedFile\]=false/);
+});
