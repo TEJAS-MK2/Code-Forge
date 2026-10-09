@@ -15,7 +15,7 @@ Requirements: Node.js 22 or newer and npm.
 ```sh
 git clone https://github.com/TEJAS-MK2/Code-Forge.git
 cd Code-Forge
-npm install --no-package-lock --no-audit --no-fund
+npm install --no-package-lock --no-fund
 npm run build
 ```
 
@@ -37,7 +37,7 @@ npm run test:e2e
 
 The browser test starts a temporary local server and uses a fresh Chromium context. It checks startup, live preview execution, editing and browser-local persistence, reload behavior and narrow viewport overflow. The CI workflow runs the production build and automated tests before deployment.
 
-If Playwright's browser is already installed, you do not need to install it again. If a test fails, fix the cause rather than weakening an assertion just to get a green build.
+Dependency installation intentionally leaves npm's install-time vulnerability audit enabled. If npm reports an advisory, review the affected dependency and its remediation rather than suppressing the audit output. If Playwright's browser is already installed, you do not need to install it again. If a test fails, fix the cause rather than weakening an assertion just to get a green build.
 
 ## Implementation guidelines
 
