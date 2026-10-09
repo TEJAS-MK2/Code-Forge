@@ -444,3 +444,13 @@ test("normal-text interface colors and editor syntax tokens use higher-contrast 
   assert.match(editor, /color: "#c5f39f"/);
   assert.match(editor, /color: "#a6d4ff"/);
 });
+
+
+test("malformed stored workspaces are copied to a recovery key before normal saves can replace them", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /localStorage\.setItem\("code-forge-recovery-backup-v1",v2\)/);
+  assert.match(app, /recoveryBackupRaw&&!recoveryBackupPreserved/);
+  assert.match(app, /function exportRecoveryBackup\(\)/);
+  assert.match(app, /Export preserved recovery copy/);
+  assert.match(app, /The invalid workspace backup could not be preserved locally/);
+});

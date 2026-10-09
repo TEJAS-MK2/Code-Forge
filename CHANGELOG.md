@@ -20,3 +20,4 @@
 - Kept template files visibly unsaved when local storage fails and clarified the warning shown when closing an unsaved virtual file.
 - Added a tested storage writer that distinguishes primary workspace failures from failures of the legacy compatibility mirror, with quota-failure recovery tests.
 - Addressed accessibility-audit findings with a main heading, toolbar landmark, named editor textbox, adjustable separator values, keyboard-navigable output tabs, and higher-contrast editor/interface text.
+- Added startup recovery protection for malformed stored workspaces: preserve raw backup locally before overwriting, expose a recovery export command, and block writes if preservation fails.

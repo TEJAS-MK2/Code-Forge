@@ -56,12 +56,18 @@
     var type = lang(name);
     return ({html:"HTML document",css:"CSS stylesheet",js:"JavaScript source",json:"JSON document",plain:"Plain text"})[type];
   }
+  var recoveryBackupRaw=null,recoveryBackupPreserved=false;
+  try { recoveryBackupRaw=localStorage.getItem("code-forge-recovery-backup-v1");recoveryBackupPreserved=!!recoveryBackupRaw; } catch(e) {}
   function loadFiles() {
     try {
       var v2 = localStorage.getItem("code-forge-workspace-v2");
       if (v2) {
         try { return Core.readWorkspace(v2); }
-        catch (invalidWorkspace) { saveState("Workspace backup needs recovery",false); }
+        catch (invalidWorkspace) {
+          recoveryBackupRaw=v2;recoveryBackupPreserved=false;
+          try { localStorage.setItem("code-forge-recovery-backup-v1",v2);recoveryBackupPreserved=localStorage.getItem("code-forge-recovery-backup-v1")===v2; } catch(e) {}
+          saveState(recoveryBackupPreserved?"Recovery copy preserved":"Backup recovery blocked",false);
+        }
       }
       var old = JSON.parse(localStorage.getItem("code-forge-project-v1"));
       if (Core.validProject(old)) return {"index.html":old.html,"styles.css":old.css,"app.js":old.js};
@@ -97,6 +103,7 @@
   function rememberEditor() { if (activeFile && files[activeFile] != null) files[activeFile] = editor.value; }
   function persist(showError) {
     rememberEditor();
+    if(recoveryBackupRaw&&!recoveryBackupPreserved){saveState("Recovery copy not saved",false);if(showError)say("The existing workspace backup is invalid and could not be preserved. Export the raw recovery copy before continuing.");return false;}
     var result;
     try { result=Core.writeWorkspace(localStorage,files); }
     catch(error) { result={saved:false,error:error}; }
@@ -106,6 +113,7 @@
     return false;
   }
   function persistSnapshot(showError) {
+    if(recoveryBackupRaw&&!recoveryBackupPreserved){saveState("Recovery copy not saved",false);if(showError)say("The existing workspace backup is invalid and could not be preserved. Export the raw recovery copy before continuing.");return false;}
     var result;
     try { result=Core.writeWorkspace(localStorage,files); }
     catch(error) { result={saved:false,error:error}; }
@@ -405,6 +413,11 @@
     download("code-forge-workspace.json",JSON.stringify({format:"code-forge-workspace",version:2,files:files},null,2),"application/json;charset=utf-8");
     say("Workspace backup downloaded");
   }
+  function exportRecoveryBackup() {
+    if(!recoveryBackupRaw){say("No recovery copy is available.");return;}
+    download("code-forge-recovery-copy.json",recoveryBackupRaw,"application/json;charset=utf-8");
+    say("Raw recovery copy downloaded; the original contents were not modified.");
+  }
   function importWorkspace(file) {
     if(!file)return;
     if(!confirm("Importing this backup replaces every file in the current local workspace. Export a backup first if you need the current version."))return;
@@ -448,7 +461,7 @@
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
   editor.setAttribute("aria-label","Code editor content");
   editorHost.addEventListener("keydown",function(event){emit("keydown",event);});
-  setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);
+  setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);if(recoveryBackupRaw)say(recoveryBackupPreserved?"A raw recovery copy was preserved locally. Use the command palette to export it.":"The invalid workspace backup could not be preserved locally. Export the raw recovery copy immediately.");
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
   editor.addEventListener("input",function(){
     rememberEditor();dirty[activeFile]=true;saveState("Unsaved changes",false);renderTabs();renderExplorer();updateCursor();
@@ -507,6 +520,7 @@
       {name:"Go to line",hint:"Ctrl + G",run:goToLine},
       {name:"Reset starter workspace",hint:"Destructive",run:function(){document.getElementById("reset").click();}}
     ];
+    if(recoveryBackupRaw)commands.push({name:"Export preserved recovery copy",hint:"Raw JSON",run:exportRecoveryBackup});
     Object.keys(TEMPLATES).forEach(function(name){commands.push({name:"Template: "+name,hint:"Replace preview files",run:function(){applyTemplate(name);}});});
     var overlay=document.createElement("div");overlay.id="commandOverlay";overlay.className="command-overlay";
     var dialog=document.createElement("section");dialog.className="command-dialog";dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");dialog.setAttribute("aria-label","Command palette");
