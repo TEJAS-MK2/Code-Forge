@@ -260,3 +260,21 @@ test("CodeMirror keyboard events reach registered app shortcuts", () => {
   assert.match(app, /editorHost\.addEventListener\("keydown",function\(event\)\{emit\("keydown",event\);\}\)/);
   assert.match(app, /Ctrl\+Shift\+P|event\.key\.toLowerCase\(\)==="p"/);
 });
+
+test("recent files persist locally and appear as workspace navigation", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(app, /code-forge-recent-files/);
+  assert.match(app, /recentFiles=\[name\]\.concat/);
+  assert.match(app, /className="recent-file"/);
+  assert.match(css, /\.recent-file/);
+});
+test("console filters preserve history and can show errors only", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(app, /function renderConsoleHistory\(\)/);
+  assert.match(app, /consoleFilter==="errors"\?consoleHistory\.filter/);
+  assert.match(app, /data-console-filter="errors"/);
+  assert.match(app, /else renderConsoleHistory\(\)/);
+  assert.match(css, /\.console-filter/);
+});

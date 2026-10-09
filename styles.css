@@ -245,3 +245,10 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
 .console-time{flex:0 0 auto;color:var(--subtle);font-size:9px;padding-top:2px}
 .console-line{align-items:flex-start}
+
+.recent-heading{margin-top:10px;border-top:1px solid var(--line);padding-top:12px}
+.recent-file{padding-left:17px;color:#aeb6a7}
+.console-filters{display:flex;align-items:center;gap:3px}
+.console-filter{padding:5px 8px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--muted);font-size:10px}
+.console-filter:hover,.console-filter.is-active{border-color:var(--line-strong);background:var(--surface-raised);color:var(--ink)}
+@media(max-width:760px){.console-filters{margin-left:auto}.console-filter{padding:7px 9px}}

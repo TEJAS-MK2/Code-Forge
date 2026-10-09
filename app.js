@@ -9,6 +9,8 @@
     "app.js": "document.querySelector('#hello')?.addEventListener('click', () => {\n  document.querySelector('#message').textContent = 'Your JavaScript is running.';\n  console.log('Button clicked');\n});"
   };
   var files = loadFiles();
+  var recentFiles=[];
+  try{var storedRecent=JSON.parse(localStorage.getItem("code-forge-recent-files")||"[]");if(Array.isArray(storedRecent))recentFiles=storedRecent.filter(function(name){return safeName(name);}).slice(0,5);}catch(e){}
   var activeFile = "index.html";
   var openFiles = ["index.html", "styles.css", "app.js"];
   var dirty = Object.create(null);
@@ -141,23 +143,38 @@
     return "split";
   }
   function buildChannel() { runId++; return "cf-"+Date.now().toString(36)+"-"+runId.toString(36)+"-"+Math.random().toString(36).slice(2,9); }
-  function clearConsole() {
-    consoleOutput.replaceChildren(); consoleLines=0;consoleErrors=0;consoleWarnings=0;consoleCount.textContent="0 entries · 0 errors · 0 warnings";
-    var empty=document.createElement("div");empty.className="console-empty";empty.id="consoleEmpty";
-    empty.textContent="Console output and runtime errors will appear here.";consoleOutput.appendChild(empty);
-  }
-  var consoleErrors=0,consoleWarnings=0;
-  function addConsoleLine(level,message) {
-    var empty=document.getElementById("consoleEmpty");if(empty)empty.remove();
-    var row=document.createElement("div");row.className="console-line";
-    row.dataset.level=["log","info","warn","error","debug","system"].indexOf(level)>=0?level:"log";
-    var time=document.createElement("span");time.className="console-time";time.textContent=new Date().toLocaleTimeString();
-    var tag=document.createElement("span");tag.className="console-level";tag.textContent=level;
-    var msg=document.createElement("span");msg.className="console-message";msg.textContent=String(message);
-    row.append(time,tag,msg);consoleOutput.appendChild(row);consoleLines++;
-    if(level==="error")consoleErrors++;if(level==="warn")consoleWarnings++;
+  var consoleHistory=[],consoleFilter="all",consoleErrors=0,consoleWarnings=0;
+  function renderConsoleHistory() {
+    consoleOutput.replaceChildren();
+    var visible=consoleFilter==="errors"?consoleHistory.filter(function(entry){return entry.level==="error";}):consoleHistory;
+    if(!visible.length){
+      var empty=document.createElement("div");empty.className="console-empty";empty.id="consoleEmpty";
+      empty.textContent=consoleFilter==="errors"?"No runtime errors captured.":"Console output and runtime errors will appear here.";
+      consoleOutput.appendChild(empty);
+    } else visible.forEach(function(entry){
+      var row=document.createElement("div");row.className="console-line";row.dataset.level=entry.level;
+      var time=document.createElement("span");time.className="console-time";time.textContent=entry.time;
+      var tag=document.createElement("span");tag.className="console-level";tag.textContent=entry.level;
+      var msg=document.createElement("span");msg.className="console-message";msg.textContent=entry.message;
+      row.append(time,tag,msg);consoleOutput.appendChild(row);
+    });
+    consoleLines=consoleHistory.length;
+    consoleErrors=consoleHistory.filter(function(entry){return entry.level==="error";}).length;
+    consoleWarnings=consoleHistory.filter(function(entry){return entry.level==="warn";}).length;
     consoleCount.textContent=consoleLines+(consoleLines===1?" entry":" entries")+" · "+consoleErrors+" errors · "+consoleWarnings+" warnings";
     consoleOutput.scrollTop=consoleOutput.scrollHeight;
+  }
+  function clearConsole() {consoleHistory=[];renderConsoleHistory();}
+  function addConsoleLine(level,message) {
+    consoleHistory.push({level:["log","info","warn","error","debug","system"].indexOf(level)>=0?level:"log",message:String(message),time:new Date().toLocaleTimeString()});
+    if(consoleHistory.length>500)consoleHistory=consoleHistory.slice(-500);
+    if(panelMode==="console")renderConsoleHistory();
+    else {
+      consoleLines=consoleHistory.length;
+      consoleErrors=consoleHistory.filter(function(entry){return entry.level==="error";}).length;
+      consoleWarnings=consoleHistory.filter(function(entry){return entry.level==="warn";}).length;
+      consoleCount.textContent=consoleLines+(consoleLines===1?" entry":" entries")+" · "+consoleErrors+" errors · "+consoleWarnings+" warnings";
+    }
   }
   function renderPreview(announce) {
     rememberEditor();persist(false);currentChannel=buildChannel();clearConsole();
@@ -190,6 +207,8 @@
   function openFile(name) {
     if(files[name]==null) return;
     rememberEditor();activeFile=name;
+    recentFiles=[name].concat(recentFiles.filter(function(item){return item!==name&&files[item]!=null;})).slice(0,5);
+    try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
     if(!openFiles.includes(name))openFiles.push(name);
     switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(name))});
     editor.value=files[name];switchingFile=false;
@@ -245,6 +264,11 @@
       var state=document.createElement("span");state.className="tree-file-state";state.textContent=dirty[name]?"●":"";
       item.append(dot,text,state);if(!["index.html","styles.css","app.js"].includes(name)){var actions=document.createElement("button");actions.type="button";actions.className="tree-file-action";actions.textContent="⋯";actions.title="Rename or delete "+name;actions.setAttribute("aria-label","Actions for "+name);actions.addEventListener("click",function(e){e.stopPropagation();fileMenu(name);});item.append(actions);}item.addEventListener("click",function(){openFile(name);});item.addEventListener("contextmenu",function(e){e.preventDefault();fileMenu(name);});root.append(item);
     });
+    var visibleRecent=recentFiles.filter(function(name){return files[name]!=null;});
+    if(visibleRecent.length){
+      var recentHeading=document.createElement("div");recentHeading.className="tree-section-label recent-heading";recentHeading.textContent="RECENT";root.append(recentHeading);
+      visibleRecent.forEach(function(name){var recent=document.createElement("button");recent.type="button";recent.className="tree-file recent-file";recent.title="Recently opened: "+name;var dot=document.createElement("span");dot.className="file-type-dot type-"+lang(name);var label=document.createElement("span");label.className="tree-file-name";label.textContent=name;recent.append(dot,label);recent.addEventListener("click",function(){openFile(name);});root.append(recent);});
+    }
     var add=document.createElement("button");add.className="tree-add-file";add.type="button";add.textContent="+ New file";add.addEventListener("click",newFile);root.append(add);
     var help=document.createElement("p");help.className="tree-help";help.textContent="Virtual files are saved in browser storage. Export a backup to move them to another device.";root.append(help);
     sidePanelBody.append(root);
@@ -308,6 +332,8 @@
     if(!safeName(name)){say("That file name is not supported.");return;}
     if(files[name]!=null){say("A file with that name already exists.");return;}
     files[name]=files[oldName];delete files[oldName];if(dirty[oldName])dirty[name]=true;delete dirty[oldName];
+    recentFiles=recentFiles.map(function(item){return item===oldName?name:item;});
+    try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
     openFiles=openFiles.map(function(n){return n===oldName?name:n;});if(activeFile===oldName)activeFile=name;
     persist(true);renderTabs();renderExplorer();openFile(name);say("Renamed to "+name);
   }
@@ -315,6 +341,7 @@
     if(["index.html","styles.css","app.js"].includes(name)){say("The three preview entry files are required.");return;}
     if(!confirm("Delete "+name+" from this browser workspace?"))return;
     delete files[name];delete dirty[name];openFiles=openFiles.filter(function(n){return n!==name;});
+    recentFiles=recentFiles.filter(function(item){return item!==name;});try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
     if(activeFile===name){activeFile="index.html";switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;}
     persist(true);renderTabs();renderExplorer();updateCursor();say("Deleted "+name);
   }
@@ -360,7 +387,7 @@
       outputEntries.slice().reverse().forEach(function(entry){var row=document.createElement("div");row.className="console-line";var tag=document.createElement("span");tag.className="console-level";tag.textContent=entry.kind;var msg=document.createElement("span");msg.className="console-message";msg.textContent=entry.time+"  "+entry.message;row.append(tag,msg);consoleOutput.append(row);});
     } else if(panelMode==="problems") {
       consoleOutput.replaceChildren();var note=document.createElement("div");note.className="console-empty";note.textContent="No language-server diagnostics are configured. Runtime errors from the preview appear in Console.";consoleOutput.append(note);
-    } else clearConsole();
+    } else renderConsoleHistory();
   }
 
   // Build the IDE shell around the existing editor/preview workspace.
@@ -485,6 +512,8 @@
   });
   document.getElementById("clearConsole").addEventListener("click",clearConsole);
   document.querySelector(".console-heading").insertAdjacentHTML("afterbegin",'<div class="panel-tabs" role="tablist" aria-label="Output panels"><button type="button" class="panel-tab is-active" data-panel="console">Console</button><button type="button" class="panel-tab" data-panel="output">Output</button><button type="button" class="panel-tab" data-panel="problems">Problems</button></div>');
+  document.querySelector(".console-heading").insertAdjacentHTML("beforeend",'<div class="console-filters" role="group" aria-label="Console filter"><button type="button" class="console-filter is-active" data-console-filter="all" aria-pressed="true">All</button><button type="button" class="console-filter" data-console-filter="errors" aria-pressed="false">Errors</button></div>');
+  document.querySelectorAll(".console-filter").forEach(function(button){button.addEventListener("click",function(){consoleFilter=button.dataset.consoleFilter;document.querySelectorAll(".console-filter").forEach(function(item){var active=item===button;item.classList.toggle("is-active",active);item.setAttribute("aria-pressed",String(active));});if(panelMode==="console")renderConsoleHistory();});});
   document.querySelectorAll(".panel-tab").forEach(function(b){b.addEventListener("click",function(){panelMode=b.dataset.panel;document.querySelectorAll(".panel-tab").forEach(function(x){x.classList.toggle("is-active",x===b);});renderBottomPanel();});});
   window.addEventListener("message",function(event){
     if(event.source!==frame.contentWindow||!event.data||event.data.__codeForge!==currentChannel)return;
