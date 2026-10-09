@@ -197,9 +197,12 @@ test("workspace tabs expose unsaved markers and extra-file actions are accessibl
   assert.match(css, /\.tree-file-action/);
 });
 
-test("debounced save clears the file that changed even after switching tabs", () => {
+test("debounced saves persist the file snapshot without replacing another active editor", () => {
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
-  assert.match(app, /var changedFile=activeFile;saveTimer=setTimeout\(function\(\)\{persist\(false\);dirty\[changedFile\]=false/);
+  assert.match(app, /var changedFile=activeFile;saveTimer=setTimeout\(function\(\)\{/);
+  assert.match(app, /if\(activeFile===changedFile\)rememberEditor\(\)/);
+  assert.match(app, /var saved=persistSnapshot\(false\)/);
+  assert.match(app, /if\(saved\)\{dirty\[changedFile\]=false/);
 });
 
 
