@@ -202,7 +202,7 @@
       sidePanelBody.append(settings);
       var indent=settings.querySelector("#indentSetting");try{indent.value=localStorage.getItem("code-forge-indent")||"2";}catch(e){}
       indent.addEventListener("change",function(){try{localStorage.setItem("code-forge-indent",indent.value);}catch(e){}editorView.dispatch({effects:indentCompartment.reconfigure(Engine.indentUnit.of(indent.value==="tab"?"\t":" ".repeat(Number(indent.value))))});document.getElementById("indentLabel").textContent=indent.value==="tab"?"Tabs":"Spaces: "+indent.value;});
-      settings.querySelector("#wrapSetting").addEventListener("change",function(e){editorView.dispatch({effects:wrappingCompartment.reconfigure(e.target.checked?Engine.lineWrapping:[])});});
+      settings.querySelector("#wrapSetting").addEventListener("change",function(e){editorView.dispatch({effects:wrappingCompartment.reconfigure(e.target.checked?Engine.EditorView.lineWrapping:[])});});
       return;
     }
     var root=document.createElement("div");root.className="explorer-tree";

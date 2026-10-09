@@ -159,8 +159,8 @@ test("workspace retains required preview entry files and prevents deleting them"
 test("word-wrap setting uses a CodeMirror compartment rather than a nonexistent editor facet", () => {
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const editorSource = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
-  assert.match(editorSource, /import \{ lineWrapping \} from "@codemirror\/view"/);
-  assert.match(app, /wrappingCompartment\.reconfigure\(e\.target\.checked\?Engine\.lineWrapping:\[\]\)/);
+  assert.match(editorSource, /EditorView\.theme/);
+  assert.match(app, /wrappingCompartment\.reconfigure\(e\.target\.checked\?Engine\.EditorView\.lineWrapping:\[\]\)/);
 });
 
 test("command palette is an accessible filterable dialog, not a browser prompt", () => {
