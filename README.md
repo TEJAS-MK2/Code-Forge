@@ -6,13 +6,13 @@ A small, local-first browser workspace for writing HTML, CSS and JavaScript. No 
 
 ## What it does
 
-- **Three source files:** edit HTML, CSS and JavaScript in separate tabs.
+- **Local multi-file workspace:** use the activity rail and Explorer to create, open, rename and delete additional text files. The workspace is virtual and browser-local, not a disk filesystem.
 - **Live preview:** changes refresh the preview automatically; use **Run** or **Ctrl/⌘ + Enter** to run immediately.
 - **Runtime console:** view console output, warnings and JavaScript runtime errors without leaving the page.
 - **Local autosave:** your current project is saved to this browser's localStorage.
-- **Portable project backup:** export and import a JSON project file to move work between browsers or devices.
+- **Portable workspace backup:** export/import JSON backups containing all workspace files. Older three-file backups remain supported.
 - **Standalone HTML export:** download a single HTML file with your HTML, CSS and JavaScript combined.
-- **Flexible workspace:** switch between side-by-side, stacked, editor-focus and preview-focus layouts. The editor/preview split is resizable on desktop, and your preferred layout is saved locally.
+- **IDE workspace:** activity rail, file explorer, tabs, unsaved indicators, workspace-wide text search, editor settings and a command palette (Ctrl/⌘ + Shift + P).
 - **CodeMirror 6 editor:** syntax highlighting for HTML, CSS and JavaScript, line numbers, bracket matching, code folding, completion, search and undo/redo.
 - **Keyboard and accessibility basics:** keyboard shortcuts, visible focus styles, labeled editor controls and reduced-motion support.
 - **Local static bundle:** the editor libraries are bundled into the published site; no CDN, application backend or runtime package download is needed.
@@ -20,7 +20,7 @@ A small, local-first browser workspace for writing HTML, CSS and JavaScript. No 
 ## Getting started
 
 1. Open the [live site](https://tejas-mk2.github.io/Code-Forge/). For local development, install Node.js 20 or newer and run `npm install` followed by `npm run build`, then serve the generated `dist/` folder over HTTP.
-2. Choose the HTML, CSS or JS tab and edit the source.
+2. Choose a file in Explorer or its editor tab. Use New file to add a browser-local text file.
 3. Check the live preview and console.
 4. Use **Backup JSON** to keep a portable copy of all three source files, or **Download HTML** for a standalone page.
 
@@ -32,6 +32,8 @@ Saved work belongs to the current browser profile on the current device. Clearin
 | --- | --- |
 | Ctrl/⌘ + Enter | Run the current project |
 | Ctrl/⌘ + S | Save to this browser |
+| Ctrl/⌘ + N | Create a workspace file |
+| Ctrl/⌘ + Shift + P | Open the command palette |
 | Tab | Insert two spaces |
 
 ## Security notes
@@ -58,7 +60,7 @@ GitHub Actions runs these checks before publishing the site to GitHub Pages.
 
 ## Development
 
-The main files are:
+The workspace's three preview entry files are `index.html`, `styles.css` and `app.js`; additional virtual text files are editable and included in workspace backups, but are not automatically imported by the preview. The main source files are:
 
 - index.html — accessible application structure.
 - styles.css — responsive visual system.
@@ -66,7 +68,7 @@ The main files are:
 - core.js — document generation and portable project format.
 - src/editor.js — CodeMirror 6 setup, HTML/CSS/JavaScript language support and the editor theme.
 - scripts/build.cjs — builds a self-contained static site into `dist/`.
-- tests/editor.test.cjs — regression tests for document generation and the editor build wiring.
+- tests/editor.test.cjs — regression tests for document generation, editor wiring and IDE workspace behavior.
 - .github/workflows/pages.yml — dependency install, build, validation and GitHub Pages deployment.
 
 ## License

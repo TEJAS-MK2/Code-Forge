@@ -147,3 +147,72 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .editor-host .cm-content, .editor-host .cm-gutter { min-height: 100%; }
 .editor-host .cm-line { overflow-wrap: anywhere; }
 @media (max-width: 760px) { .editor-host, .editor-host .cm-editor { min-height: 280px; } }
+
+/* IDE shell: restrained desktop-editor chrome with a usable local explorer. */
+.ide-layout{display:flex;align-items:stretch;min-width:0;flex:1;border-bottom:1px solid var(--line);background:var(--canvas)}
+.activity-rail{width:46px;flex:0 0 46px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 5px;background:#141714;border-right:1px solid var(--line)}
+.rail-button{width:34px;height:36px;border:0;border-left:2px solid transparent;border-radius:4px;background:transparent;color:var(--muted);font-size:21px}
+.rail-button:hover{background:var(--surface-raised);color:var(--ink)}
+.rail-button.is-active{border-left-color:var(--accent);background:var(--surface-raised);color:var(--ink)}
+.side-panel{width:220px;flex:0 0 220px;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line);background:#171a17;transition:width .15s ease,flex-basis .15s ease}
+.side-panel.is-collapsed{width:0;flex-basis:0;border-right:0;overflow:hidden}
+.side-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:0 10px 0 13px;border-bottom:1px solid var(--line);font-size:10px;font-weight:750;letter-spacing:.09em;color:var(--muted)}
+.side-actions{display:flex;gap:3px}
+.icon-button{width:26px;height:26px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--muted);font-size:18px}
+.icon-button:hover{border-color:var(--line-strong);background:var(--surface-raised);color:var(--ink)}
+.side-panel-body{min-height:0;flex:1;overflow:auto}
+.workspace-note{padding:9px 10px;border-top:1px solid var(--line);color:var(--subtle);font-size:8px;letter-spacing:.08em;white-space:nowrap}
+.explorer-tree{padding:8px 0}
+.tree-section-label{display:flex;align-items:center;gap:7px;padding:5px 12px 9px;color:var(--muted);font-size:9px;font-weight:750;letter-spacing:.08em}
+.tree-count{margin-left:auto;color:var(--subtle);font-weight:500}
+.tree-file{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:7px 10px 7px 17px;border:0;border-left:2px solid transparent;background:transparent;text-align:left;color:#c9cec4;font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
+.tree-file:hover{background:#222720}
+.tree-file.is-active{border-left-color:var(--accent);background:#252b22;color:#f1f3ed}
+.tree-file-name,.file-tab-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-file-state{margin-left:auto;color:var(--accent);font-size:9px}
+.file-type-dot{display:inline-block;width:7px;height:7px;flex:0 0 7px;border-radius:2px;background:#9ca69a}
+.type-html{background:#e7a76d}.type-css{background:#83b9e8}.type-js{background:#e8d276}.type-json{background:#bca0e5}.type-plain{background:#9ca69a}
+.tree-add-file{margin:10px 10px 0;padding:7px 8px;border:1px dashed var(--line-strong);border-radius:4px;background:transparent;color:var(--muted);font-size:10px;text-align:left}
+.tree-add-file:hover{border-color:var(--accent);color:var(--ink)}
+.tree-help{padding:10px 12px;color:var(--subtle);font-size:10px;line-height:1.55}
+.ide-layout>.workspace{min-width:0;width:0;flex:1}
+.file-tabs{max-width:100%;overflow-x:auto;white-space:nowrap}
+.tab.file-tab{display:inline-flex;align-items:center;gap:7px;max-width:190px;border-radius:0;border-right:1px solid #252a24;padding:10px 10px}
+.tab.file-tab[aria-selected=true]{background:#20251f;border-top:2px solid var(--accent);padding-top:8px;box-shadow:none}
+.file-tab-close{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:4px;color:var(--muted);font:15px/1 system-ui}
+.file-tab-close:hover{background:#41483d;color:var(--ink)}
+.file-tab[aria-selected=true] .file-tab-close{opacity:.8}
+.search-workspace{padding:12px}
+.search-workspace input{width:100%;padding:9px 10px;border:1px solid var(--line-strong);border-radius:5px;background:#111411;color:var(--ink);font-size:11px}
+.search-results{padding-top:10px}
+.search-hit{display:flex;flex-direction:column;gap:5px;width:100%;padding:8px 5px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left}
+.search-hit:hover{background:var(--surface-raised)}
+.search-hit-file{color:var(--accent);font:10px ui-monospace,monospace}
+.search-hit-line{overflow:hidden;color:var(--muted);font:10px ui-monospace,monospace;text-overflow:ellipsis;white-space:nowrap}
+.settings-panel{padding:12px}
+.settings-kicker{color:var(--subtle);font-size:9px;letter-spacing:.1em}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);font-size:10px}
+.setting-row select{max-width:95px;padding:5px;border:1px solid var(--line-strong);border-radius:4px;background:var(--surface);color:var(--ink);font-size:10px}
+.setting-row input{accent-color:var(--accent)}
+.settings-help{color:var(--subtle);font-size:10px;line-height:1.6}
+.panel-tabs{display:flex;align-items:center;gap:3px;margin-right:auto}
+.console-heading{gap:12px}
+.panel-tab{padding:7px 8px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-size:10px}
+.panel-tab:hover{color:var(--ink)}
+.panel-tab.is-active{border-bottom-color:var(--accent);color:var(--ink)}
+#encodingLabel{margin-left:12px;color:var(--subtle)}
+@media(max-width:980px){.side-panel{width:190px;flex-basis:190px}.activity-rail{width:40px;flex-basis:40px}.side-panel-heading{padding-left:9px}}
+@media(max-width:760px){
+ .ide-layout{position:relative;min-height:0;flex-direction:column}
+ .activity-rail{width:100%;height:42px;flex-basis:42px;flex-direction:row;justify-content:flex-start;padding:4px 9px;border-right:0;border-bottom:1px solid var(--line)}
+ .rail-button{height:31px;width:35px}
+ .side-panel{position:absolute;z-index:4;top:42px;left:0;bottom:auto;width:min(82vw,270px);max-height:60vh;min-height:180px;box-shadow:12px 12px 28px #0007}
+ .side-panel.is-collapsed{width:0;min-width:0}
+ .ide-layout>.workspace{width:100%;flex:auto}
+ .file-tabs{min-width:0;overflow:auto}
+ .tab.file-tab{max-width:150px;padding:9px 7px}
+ .tab.file-tab[aria-selected=true]{padding-top:7px}
+ .console-heading{flex-wrap:wrap}
+ .panel-tabs{order:0}
+ .console-heading>#clearConsole{order:1}
+}

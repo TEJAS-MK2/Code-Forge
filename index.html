@@ -36,21 +36,17 @@
     </div>
   </div>
   <main>
-    <div class="workspace layout-split" id="workspace">
+    <div class="ide-layout" id="ideLayout"><nav class="activity-rail" aria-label="Workspace tools"><button class="rail-button is-active" type="button" data-view="explorer" aria-label="Explorer" title="Explorer">▤</button><button class="rail-button" type="button" data-view="search" aria-label="Search files" title="Search files">⌕</button><button class="rail-button" type="button" data-view="settings" aria-label="Workspace settings" title="Workspace settings">⚙</button></nav><aside class="side-panel" id="sidePanel" aria-label="Workspace explorer"><div class="side-panel-heading"><span id="sidePanelTitle">EXPLORER</span><div class="side-actions"><button class="icon-button" id="newFile" type="button" title="New file" aria-label="New file">＋</button><button class="icon-button" id="collapseExplorer" type="button" title="Collapse explorer" aria-label="Collapse explorer">‹</button></div></div><div id="sidePanelBody" class="side-panel-body"></div><div class="workspace-note">BROWSER-LOCAL WORKSPACE</div></aside><div class="workspace layout-split" id="workspace">
       <section class="pane editor-pane" aria-label="Code editor">
         <div class="pane-heading">
           <div class="pane-title"><span class="pane-symbol" aria-hidden="true">⌘</span> Editor</div>
-          <div class="tab-list" role="tablist" aria-label="Project files">
-            <button class="tab" type="button" role="tab" data-lang="html" aria-selected="true">HTML</button>
-            <button class="tab" type="button" role="tab" data-lang="css" aria-selected="false">CSS</button>
-            <button class="tab" type="button" role="tab" data-lang="js" aria-selected="false">JS</button>
-          </div>
+          <div class="tab-list" id="fileTabs" role="tablist" aria-label="Open files"></div>
         </div>
         <div class="editor-body">
           <div id="editorHost" class="editor-host" aria-label="Source editor"></div>
         </div>
         <div class="editor-footer">
-          <span id="languageLabel">HTML document</span>
+          <span id="languageLabel">HTML document</span><span id="encodingLabel">UTF-8 · LF</span>
           <span class="button-group"><button class="button button-quiet" id="trim" type="button" title="Remove trailing whitespace">Trim</button><button class="button button-quiet" id="clear" type="button">Clear file</button></span>
         </div>
       </section>
@@ -63,7 +59,7 @@
         <div class="preview-toolbar"><span>LOCAL PREVIEW <span aria-hidden="true">/</span> <span id="previewVersion">Run 1</span></span><span class="button-group"><button class="button" id="openPreview" type="button">Open separately ↗</button><button class="button" id="refresh" type="button" aria-label="Refresh preview">Refresh ↻</button></span></div>
         <iframe class="preview-frame" id="preview" title="Rendered code preview" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
       </section>
-    </div>
+    </div></div>
     <section class="console" aria-label="JavaScript console">
       <div class="console-heading">
         <div class="console-title"><span class="pane-symbol" aria-hidden="true">&gt;_</span> Console <span class="console-count" id="consoleCount">0 entries</span></div>
@@ -74,7 +70,7 @@
   </main>
   <footer class="statusbar">
     <div class="status-left"><span><span class="status-dot"></span> Browser workspace</span><span id="cursor">Ln 1, Col 1</span><span id="charCount">0 chars</span><span id="saveState" class="status-saved">Saved on this device</span></div>
-    <div class="status-right"><span>Local-first · No account</span><span>Ctrl/⌘ + Enter to run</span></div>
+    <div class="status-right"><span id="indentLabel">Spaces: 2</span><span id="fileTypeLabel">HTML</span><span>Local-first · No account</span><span>Ctrl/⌘ + Enter to run</span></div>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>

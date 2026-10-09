@@ -128,3 +128,29 @@ test("production build copies static app assets and bundles editor locally", () 
   assert.match(workflow, /npm install/);
   assert.match(workflow, /path: dist/);
 });
+
+
+test("IDE workspace includes local explorer, file search, tabs and truthful panels", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  for (const token of ['id="ideLayout"', 'id="sidePanel"', 'id="fileTabs"', 'data-view="explorer"', 'data-view="search"']) assert.ok(html.includes(token), token);
+  for (const token of ["code-forge-workspace-v2", "function newFile()", "function renameFile(", "function deleteFile(", "function searchFiles(", "function commandPalette()", "panelMode === \\"problems\\""]) assert.ok(app.includes(token), token);
+  assert.ok(css.includes(".activity-rail"));
+  assert.ok(css.includes(".tree-file"));
+});
+
+test("workspace backup keeps legacy three-file project import compatible", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.ok(app.includes("Core.readProject(parsed)"));
+  assert.ok(app.includes('"index.html":legacy.html'));
+  assert.ok(app.includes('"styles.css":legacy.css'));
+  assert.ok(app.includes('"app.js":legacy.js'));
+});
+
+test("workspace retains required preview entry files and prevents deleting them", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.ok(app.includes('["index.html","styles.css","app.js"].includes(name)'));
+  assert.ok(app.includes("The three preview entry files are required."));
+  assert.ok(app.includes('Core.buildDocument(files["index.html"],files["styles.css"],files["app.js"]'));
+});
