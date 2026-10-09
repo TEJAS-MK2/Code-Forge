@@ -35,6 +35,7 @@
     if (["split", "stack", "editor", "preview"].indexOf(nextLayout) === -1) return;
     layout = nextLayout;
     workspace.classList.remove("layout-split", "layout-stack", "layout-editor", "layout-preview");
+    workspace.style.removeProperty("grid-template-columns");
     workspace.classList.add("layout-" + layout);
     document.querySelectorAll(".layout-button").forEach(function (button) {
       button.setAttribute("aria-pressed", String(button.dataset.layout === layout));
