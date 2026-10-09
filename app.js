@@ -316,6 +316,7 @@
   document.getElementById("newFile").addEventListener("click",newFile);
   document.getElementById("collapseExplorer").addEventListener("click",function(){sidePanel.classList.toggle("is-collapsed");});
   var engineExtensions=[Engine.basicSetup,Engine.theme,languageCompartment.of(languageExtension(activeFile)),wrappingCompartment.of(Engine.lineWrapping),indentCompartment.of(Engine.indentUnit.of("  ")),Engine.EditorView.updateListener.of(function(update){if(update.docChanged&&!switchingFile)emit("input");if(update.selectionSet||update.docChanged)emit("select");})];
+  try{var savedFontSize=Number(localStorage.getItem("code-forge-font-size")||12);if([11,12,13,14,16,18].includes(savedFontSize))editorHost.style.setProperty("--cf-editor-font-size",savedFontSize+"px");}catch(e){}
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
   setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
