@@ -15,3 +15,4 @@
 - Added regression coverage for malformed workspace backups, unsafe paths, invalid file values and legacy backup compatibility.
 - Added case-sensitive and whole-word workspace search, previous/next match navigation, match positions and clearer result counts.
 - Added mobile overflow constraints and regression checks for narrow layouts while retaining the existing desktop design.
+- Added an accessible Go to Line dialog with line validation and Ctrl/⌘ + G shortcut, also available in the command palette.

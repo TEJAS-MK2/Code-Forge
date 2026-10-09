@@ -345,3 +345,22 @@ test("mobile workspace constrains horizontal overflow without changing desktop i
   assert.match(css, /@media\(max-width:760px\)\{html,body\{max-width:100%;overflow-x:hidden\}/);
   assert.match(css, /\.workspace\{min-width:0;width:100%;max-width:100%\}/);
 });
+
+
+test("Go to Line is available through Ctrl+G and the accessible command palette", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(app, /function goToLine\(\)/);
+  assert.match(app, /event\.key\.toLowerCase\(\)==="g"\)\{event\.preventDefault\(\);goToLine\(\)/);
+  assert.match(app, /name:"Go to line",hint:"Ctrl \+ G",run:goToLine/);
+  assert.match(app, /setAttribute\("aria-label","Go to line"\)/);
+  assert.match(app, /setAttribute\("aria-label","Line number"\)/);
+  assert.match(css, /\.command-dialog/);
+});
+
+test("CodeMirror editor setup uses the built-in keyboard and bracket editing toolkit", () => {
+  const source = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(source, /basicSetup/);
+  assert.match(source, /EditorView/);
+  assert.match(source, /@codemirror\/lang-html/);
+});
