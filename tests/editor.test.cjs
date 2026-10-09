@@ -201,3 +201,13 @@ test("debounced save clears the file that changed even after switching tabs", ()
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   assert.match(app, /var changedFile=activeFile;saveTimer=setTimeout\(function\(\)\{persist\(false\);dirty\[changedFile\]=false/);
 });
+
+
+test("editor settings expose a persistent font-size preference", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const editor = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(app, /id="fontSizeSetting"/);
+  assert.match(app, /localStorage\.getItem\("code-forge-font-size"\)/);
+  assert.match(app, /localStorage\.setItem\("code-forge-font-size",String\(size\)\)/);
+  assert.match(editor, /var\(--cf-editor-font-size, 12px\)/);
+});

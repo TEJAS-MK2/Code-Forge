@@ -6,7 +6,7 @@ import { css } from "@codemirror/lang-css";
 import { javascript } from "@codemirror/lang-javascript";
 
 const theme = EditorView.theme({
-  "&": { height: "100%", backgroundColor: "#141714", color: "#dce4d5", fontSize: "12px" },
+  "&": { height: "100%", backgroundColor: "#141714", color: "#dce4d5", fontSize: "var(--cf-editor-font-size, 12px)" },
   ".cm-content": { fontFamily: 'ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace', lineHeight: "1.7", caretColor: "#b8e986", padding: "15px 0" },
   ".cm-line": { padding: "0 14px" },
   ".cm-gutters": { backgroundColor: "#171a16", color: "#687162", borderRight: "1px solid #292e28", paddingRight: "4px" },

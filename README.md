@@ -74,3 +74,7 @@ The workspace's three preview entry files are `index.html`, `styles.css` and `ap
 ## License
 
 No license is specified yet. Add a license file if you want to grant others explicit reuse rights.
+
+### Editor preferences
+
+Use **Explorer → Settings** to choose indentation, toggle word wrapping, and adjust the editor font size from 11–18 px. The font-size preference is saved in this browser only; no account or cloud sync is involved.

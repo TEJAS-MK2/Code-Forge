@@ -199,10 +199,12 @@
     }
     if(sideView==="settings") {
       var settings=document.createElement("div");settings.className="settings-panel";
-      settings.innerHTML='<p class="settings-kicker">EDITOR</p><label class="setting-row"><span>Indentation</span><select id="indentSetting"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab character</option></select></label><label class="setting-row"><span>Word wrap</span><input id="wrapSetting" type="checkbox" checked></label><p class="settings-help">Projects and preferences stay in this browser profile. No account or cloud sync is used.</p>';
+      settings.innerHTML='<p class="settings-kicker">EDITOR</p><label class="setting-row"><span>Indentation</span><select id="indentSetting"><option value="2">2 spaces</option><option value="4">4 spaces</option><option value="tab">Tab character</option></select></label><label class="setting-row"><span>Font size</span><select id="fontSizeSetting"><option value="11">11 px</option><option value="12">12 px</option><option value="13">13 px</option><option value="14">14 px</option><option value="16">16 px</option><option value="18">18 px</option></select></label><label class="setting-row"><span>Word wrap</span><input id="wrapSetting" type="checkbox" checked></label><p class="settings-help">Projects and preferences stay in this browser profile. No account or cloud sync is used.</p>';
       sidePanelBody.append(settings);
       var indent=settings.querySelector("#indentSetting");try{indent.value=localStorage.getItem("code-forge-indent")||"2";}catch(e){}
       indent.addEventListener("change",function(){try{localStorage.setItem("code-forge-indent",indent.value);}catch(e){}editorView.dispatch({effects:indentCompartment.reconfigure(Engine.indentUnit.of(indent.value==="tab"?"\t":" ".repeat(Number(indent.value))))});document.getElementById("indentLabel").textContent=indent.value==="tab"?"Tabs":"Spaces: "+indent.value;});
+      var fontSize=settings.querySelector("#fontSizeSetting");try{fontSize.value=localStorage.getItem("code-forge-font-size")||"12";}catch(e){}editorHost.style.setProperty("--cf-editor-font-size",fontSize.value+"px");
+      fontSize.addEventListener("change",function(){var size=Number(fontSize.value);if(![11,12,13,14,16,18].includes(size))return;editorHost.style.setProperty("--cf-editor-font-size",size+"px");try{localStorage.setItem("code-forge-font-size",String(size));}catch(e){}say("Editor font size set to "+size+" px");editorView.requestMeasure();});
       settings.querySelector("#wrapSetting").addEventListener("change",function(e){editorView.dispatch({effects:wrappingCompartment.reconfigure(e.target.checked?Engine.EditorView.lineWrapping:[])});});
       return;
     }
