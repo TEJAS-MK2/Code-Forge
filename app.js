@@ -223,13 +223,22 @@
     sidePanelBody.replaceChildren();
     if(sideView==="search") {
       var wrap=document.createElement("div");wrap.className="search-workspace";
-      var input=document.createElement("input");input.type="search";input.id="workspaceSearch";input.placeholder="Find text in files";input.setAttribute("aria-label","Find text in workspace");
+      var input=document.createElement("input");input.type="search";input.id="workspaceSearch";input.placeholder="Find in workspace";input.setAttribute("aria-label","Find text in workspace");
+      var options=document.createElement("div");options.className="search-options";
+      var caseLabel=document.createElement("label");caseLabel.className="search-option";var caseSensitive=document.createElement("input");caseSensitive.type="checkbox";caseSensitive.id="searchCaseSensitive";caseLabel.append(caseSensitive,document.createTextNode("Match case"));
+      var wordLabel=document.createElement("label");wordLabel.className="search-option";var wholeWord=document.createElement("input");wholeWord.type="checkbox";wholeWord.id="searchWholeWord";wordLabel.append(wholeWord,document.createTextNode("Whole word"));options.append(caseLabel,wordLabel);
       var replacement=document.createElement("input");replacement.type="text";replacement.id="workspaceReplace";replacement.placeholder="Replace with…";replacement.setAttribute("aria-label","Replacement text");
+      var navigation=document.createElement("div");navigation.className="search-navigation";
+      var previous=document.createElement("button");previous.type="button";previous.className="tree-add-file";previous.textContent="Previous match";previous.setAttribute("aria-label","Go to previous search match");
+      var next=document.createElement("button");next.type="button";next.className="tree-add-file";next.textContent="Next match";next.setAttribute("aria-label","Go to next search match");navigation.append(previous,next);
       var replaceButton=document.createElement("button");replaceButton.type="button";replaceButton.className="tree-add-file";replaceButton.textContent="Replace all in workspace";
       var results=document.createElement("div");results.className="search-results";results.id="searchResults";
-      wrap.append(input,replacement,replaceButton,results);sidePanelBody.append(wrap);
-      input.addEventListener("input",function(){searchFiles(input.value,results);});
-      replaceButton.addEventListener("click",function(){replaceAllFiles(input.value,replacement.value);searchFiles(input.value,results);});
+      function searchOptions(){return {caseSensitive:caseSensitive.checked,wholeWord:wholeWord.checked};}
+      function refresh(){searchFiles(input.value,results,searchOptions());}
+      wrap.append(input,options,replacement,navigation,replaceButton,results);sidePanelBody.append(wrap);
+      input.addEventListener("input",refresh);caseSensitive.addEventListener("change",refresh);wholeWord.addEventListener("change",refresh);
+      previous.addEventListener("click",function(){navigateSearchMatch(-1);});next.addEventListener("click",function(){navigateSearchMatch(1);});
+      replaceButton.addEventListener("click",function(){replaceAllFiles(input.value,replacement.value,searchOptions());refresh();});
       input.focus();return;
     }
     if(sideView==="settings") {
@@ -270,7 +279,9 @@
     var help=document.createElement("p");help.className="tree-help";help.textContent="Virtual files are saved in browser storage. Export a backup to move them to another device.";root.append(help);
     sidePanelBody.append(root);
   }
-  function searchFiles(query,results) {
+  var searchMatches=[],searchMatchIndex=-1;
+  function searchPattern(query,options) {
+    var escaped=String(query).replace(/[.*+?^${}()|[\]\\]/g,"\\  function searchFiles(query,results) {
     results.replaceChildren();if(!query.trim())return;
     var q=query.toLowerCase(),count=0;
     Object.keys(files).forEach(function(name){
@@ -294,6 +305,71 @@
     if(!count){say("No matches to replace.");return;}
     if(!confirm("Replace "+count+" occurrence"+(count===1?"":"s")+" across all workspace files? This cannot be undone."))return;
     Object.keys(files).forEach(function(name){files[name]=files[name].split(query).join(replacement);});
+    switchingFile=true;editor.value=files[activeFile];switchingFile=false;
+    var saved=persist(true);
+    if(saved)dirty=Object.create(null);
+    else Object.keys(files).forEach(function(name){dirty[name]=true;});
+    renderTabs();renderExplorer();updateCursor();
+    if(["index.html","styles.css","app.js"].includes(activeFile))renderPreview(false);
+    say(saved?"Replaced "+count+" occurrence"+(count===1?"":"s")+" across the workspace.":"Replacement applied in memory, but storage failed. Unsaved markers are retained; export a backup.");
+  }");
+    var source=options&&options.wholeWord?"(^|[^A-Za-z0-9_])("+escaped+")(?=$|[^A-Za-z0-9_])":escaped;
+    return new RegExp(source,"g"+(options&&options.caseSensitive?"":"i")+(options&&options.wholeWord?"m":""));
+  }
+  function jumpToSearchMatch(index) {
+    if(index<0||index>=searchMatches.length)return;
+    searchMatchIndex=index;var match=searchMatches[index];openFile(match.name);
+    var lineObj=editorView.state.doc.line(Math.min(match.line,editorView.state.doc.lines));
+    editorView.dispatch({selection:{anchor:Math.min(lineObj.to,lineObj.from+match.column)},scrollIntoView:true});
+    editor.focus();
+    var results=document.getElementById("searchResults");
+    if(results){results.querySelectorAll(".search-hit").forEach(function(hit){hit.classList.remove("is-current");});var current=results.querySelector('[data-match-index="'+index+'"]');if(current){current.classList.add("is-current");current.scrollIntoView({block:"nearest"});}}
+    var summary=document.getElementById("searchSummary");if(summary)summary.textContent=(index+1)+" of "+searchMatches.length+" matches";
+  }
+  function navigateSearchMatch(direction) {
+    if(!searchMatches.length){say("No search matches to navigate.");return;}
+    var next=searchMatchIndex<0?(direction<0?searchMatches.length-1:0):(searchMatchIndex+direction+searchMatches.length)%searchMatches.length;
+    jumpToSearchMatch(next);
+  }
+  function searchFiles(query,results,options) {
+    options=options||{};results.replaceChildren();searchMatches=[];searchMatchIndex=-1;
+    if(!query.trim())return;
+    Object.keys(files).forEach(function(name){
+      var lines=files[name].split("\n");
+      lines.forEach(function(line,lineIndex){
+        var pattern=searchPattern(query,options),match;
+        while((match=pattern.exec(line))!==null&&searchMatches.length<500){
+          var prefix=options.wholeWord?(match[1]||"").length:0;
+          searchMatches.push({name:name,line:lineIndex+1,column:match.index+prefix});
+        }
+      });
+    });
+    var summary=document.createElement("p");summary.className="search-summary";summary.id="searchSummary";
+    summary.textContent=searchMatches.length?searchMatches.length+" match"+(searchMatches.length===1?"":"es")+" found"+(searchMatches.length===500?" (showing first 500)":""):"No matches found.";
+    results.append(summary);
+    searchMatches.forEach(function(matchData,index){
+      var line=files[matchData.name].split("\n")[matchData.line-1];
+      var hit=document.createElement("button");hit.type="button";hit.className="search-hit";hit.dataset.matchIndex=String(index);
+      var filename=document.createElement("span");filename.className="search-hit-file";filename.textContent=matchData.name+":"+matchData.line+":"+(matchData.column+1);
+      var excerpt=document.createElement("span");excerpt.className="search-hit-line";excerpt.textContent=line.trim().slice(0,120)||"(blank line)";
+      hit.append(filename,excerpt);hit.addEventListener("click",function(){jumpToSearchMatch(index);});results.append(hit);
+    });
+  }
+  function replaceAllFiles(query,replacement,options) {
+    query=String(query||"");replacement=String(replacement==null?"":replacement);options=options||{};
+    if(!query){say("Enter text to find first.");return;}
+    rememberEditor();
+    var count=0,pattern=searchPattern(query,options);
+    Object.keys(files).forEach(function(name){files[name].split("\n").forEach(function(line){var re=searchPattern(query,options);while(re.exec(line)!==null)count++;});});
+    if(!count){say("No matches to replace.");return;}
+    if(!confirm("Replace "+count+" occurrence"+(count===1?"":"s")+" across all workspace files? This cannot be undone."))return;
+    Object.keys(files).forEach(function(name){
+      files[name]=files[name].split("\n").map(function(line){
+        var re=searchPattern(query,options);
+        if(options.wholeWord)return line.replace(re,function(full,prefix,found){return (prefix||"")+replacement;});
+        return line.replace(re,replacement);
+      }).join("\n");
+    });
     switchingFile=true;editor.value=files[activeFile];switchingFile=false;
     var saved=persist(true);
     if(saved)dirty=Object.create(null);

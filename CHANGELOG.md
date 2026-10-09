@@ -13,3 +13,5 @@
 - Added strict all-or-nothing workspace backup validation, including file names, content types, supported version and required preview files.
 - Kept unsaved markers visible after failed workspace-wide replacements or imports when browser storage is unavailable.
 - Added regression coverage for malformed workspace backups, unsafe paths, invalid file values and legacy backup compatibility.
+- Added case-sensitive and whole-word workspace search, previous/next match navigation, match positions and clearer result counts.
+- Added mobile overflow constraints and regression checks for narrow layouts while retaining the existing desktop design.

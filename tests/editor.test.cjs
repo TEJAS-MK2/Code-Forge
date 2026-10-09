@@ -325,3 +325,23 @@ test("import validates the full backup before replacing state and preserves unsa
   assert.match(app, /if\(!saved\)Object\.keys\(files\)\.forEach\(function\(name\)\{dirty\[name\]=true;\}\)/);
   assert.match(app, /Workspace imported in memory, but browser storage failed/);
 });
+
+
+test("workspace search supports case-sensitive and whole-word match navigation", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(app, /id="searchCaseSensitive"/);
+  assert.match(app, /id="searchWholeWord"/);
+  assert.match(app, /function searchPattern\(query,options\)/);
+  assert.match(app, /function navigateSearchMatch\(direction\)/);
+  assert.match(app, /data-match-index/);
+  assert.match(app, /function replaceAllFiles\(query,replacement,options\)/);
+  assert.match(css, /\.search-hit\.is-current/);
+});
+
+test("mobile workspace constrains horizontal overflow without changing desktop identity", () => {
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(css, /\.app-shell\{width:100%;min-width:0;max-width:100%;overflow-x:clip\}/);
+  assert.match(css, /@media\(max-width:760px\)\{html,body\{max-width:100%;overflow-x:hidden\}/);
+  assert.match(css, /\.workspace\{min-width:0;width:100%;max-width:100%\}/);
+});

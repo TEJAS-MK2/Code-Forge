@@ -238,9 +238,17 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .preview-device{max-width:150px;min-height:26px;padding:4px 6px;border:1px solid #d0d4ca;border-radius:4px;background:#f8f9f5;color:#30352e;font-size:10px}
 .preview-frame{max-width:100%;margin-inline:auto;transition:width .16s ease}
 .preview-frame-device{border-left:1px solid #d5d9cf;border-right:1px solid #d5d9cf;box-shadow:0 0 0 1px #e1e4dc}
-.search-workspace{display:flex;flex-direction:column;gap:8px}
+.search-workspace{display:flex;flex-direction:column;gap:8px;min-width:0}
 .search-workspace .tree-add-file{width:100%;margin:0;text-align:center}
-.search-workspace input{min-height:35px}
+.search-workspace input{min-height:35px;min-width:0}
+.search-options,.search-navigation{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.search-option{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:10px}
+.search-option input{width:auto;min-height:0;accent-color:var(--accent)}
+.search-navigation .tree-add-file{flex:1;width:auto;padding:7px 4px;font-size:10px}
+.search-summary{margin:4px 0;color:var(--muted);font-size:10px}
+.search-hit.is-current{outline:1px solid var(--accent);background:var(--surface-raised)}
+.app-shell{width:100%;min-width:0;max-width:100%;overflow-x:clip}
+@media(max-width:760px){html,body{max-width:100%;overflow-x:hidden}.workspace{min-width:0;width:100%;max-width:100%}.preview-pane,.editor-pane{min-width:0;max-width:100%}}
 @media(max-width:430px){.preview-toolbar{align-items:flex-start;flex-direction:column}.preview-toolbar .button-group{width:100%;flex-wrap:wrap}.preview-device{max-width:100%}}
 
 .console-time{flex:0 0 auto;color:var(--subtle);font-size:9px;padding-top:2px}

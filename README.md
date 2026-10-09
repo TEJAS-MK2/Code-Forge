@@ -12,7 +12,7 @@ A small, local-first browser workspace for writing HTML, CSS and JavaScript. No 
 - **Local autosave:** your current project is saved to this browser's localStorage.
 - **Portable workspace backup:** export/import JSON backups containing all workspace files. Older three-file backups remain supported. Imports validate the complete file list and required preview files before replacing the current workspace; if localStorage fails, unsaved markers remain visible and the app recommends exporting a backup.
 - **Standalone HTML export:** download a single HTML file with your HTML, CSS and JavaScript combined.
-- **IDE workspace:** activity rail, file explorer, tabs, recent files, duplicate-file action, unsaved indicators, workspace-wide text search and confirmed replace, editor settings and a command palette (Ctrl/⌘ + Shift + P).
+- **IDE workspace:** activity rail, file explorer, tabs, recent files, duplicate-file action, unsaved indicators, workspace-wide text search with match navigation, case-sensitive and whole-word options, and confirmed replace, editor settings and a command palette (Ctrl/⌘ + Shift + P).
 - **CodeMirror 6 editor:** syntax highlighting for HTML, CSS and JavaScript, line numbers, bracket matching, code folding, completion, search and undo/redo. Built-in landing page, portfolio, contact form, animated card and click-counter templates are available in the command palette.
 - **Keyboard and accessibility basics:** keyboard shortcuts, visible focus styles, labeled editor controls and reduced-motion support.
 - **Local static bundle:** the editor libraries are bundled into the published site; no CDN, application backend or runtime package download is needed.
@@ -44,7 +44,7 @@ Project content stays in browser-local storage unless you choose to export it or
 
 ## Tests
 
-The repository includes Node.js regression tests for document generation, runtime diagnostics, workspace backup validation (including malformed data and unsafe filenames), legacy import compatibility, local-save failure indicators and IDE wiring.
+The repository includes Node.js regression tests for document generation, runtime diagnostics, workspace backup validation (including malformed data and unsafe filenames), legacy import compatibility, local-save failure indicators, search options and responsive overflow safeguards.
 
 Run locally with Node.js 20 or newer:
 
