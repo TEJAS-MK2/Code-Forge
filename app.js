@@ -281,38 +281,7 @@
   }
   var searchMatches=[],searchMatchIndex=-1;
   function searchPattern(query,options) {
-    var escaped=String(query).replace(/[.*+?^${}()|[\]\\]/g,"\\  function searchFiles(query,results) {
-    results.replaceChildren();if(!query.trim())return;
-    var q=query.toLowerCase(),count=0;
-    Object.keys(files).forEach(function(name){
-      var lines=files[name].split("\n");
-      lines.forEach(function(line,index){
-        var at=line.toLowerCase().indexOf(q);if(at<0||count>=100)return;
-        var hit=document.createElement("button");hit.type="button";hit.className="search-hit";
-        var filename=document.createElement("span");filename.className="search-hit-file";filename.textContent=name+":"+ (index+1);
-        var excerpt=document.createElement("span");excerpt.className="search-hit-line";excerpt.textContent=line.trim().slice(0,120)||"(blank line)";
-        hit.append(filename,excerpt);hit.addEventListener("click",function(){openFile(name);var lineObj=editorView.state.doc.line(Math.min(index+1,editorView.state.doc.lines));editorView.dispatch({selection:{anchor:lineObj.from+Math.max(0,at)},scrollIntoView:true});editor.focus();});
-        results.append(hit);count++;
-      });
-    });
-    if(!count){var none=document.createElement("p");none.className="settings-help";none.textContent="No matches found.";results.append(none);}
-  }
-  function replaceAllFiles(query,replacement) {
-    query=String(query||"");replacement=String(replacement==null?"":replacement);
-    if(!query){say("Enter text to find first.");return;}
-    rememberEditor();
-    var count=Object.keys(files).reduce(function(total,name){return total+(files[name].split(query).length-1);},0);
-    if(!count){say("No matches to replace.");return;}
-    if(!confirm("Replace "+count+" occurrence"+(count===1?"":"s")+" across all workspace files? This cannot be undone."))return;
-    Object.keys(files).forEach(function(name){files[name]=files[name].split(query).join(replacement);});
-    switchingFile=true;editor.value=files[activeFile];switchingFile=false;
-    var saved=persist(true);
-    if(saved)dirty=Object.create(null);
-    else Object.keys(files).forEach(function(name){dirty[name]=true;});
-    renderTabs();renderExplorer();updateCursor();
-    if(["index.html","styles.css","app.js"].includes(activeFile))renderPreview(false);
-    say(saved?"Replaced "+count+" occurrence"+(count===1?"":"s")+" across the workspace.":"Replacement applied in memory, but storage failed. Unsaved markers are retained; export a backup.");
-  }");
+    var escaped=String(query).replace(/[.*+?^\${}()|[\]\\]/g,"\\$&");
     var source=options&&options.wholeWord?"(^|[^A-Za-z0-9_])("+escaped+")(?=$|[^A-Za-z0-9_])":escaped;
     return new RegExp(source,"g"+(options&&options.caseSensitive?"":"i")+(options&&options.wholeWord?"m":""));
   }
@@ -359,15 +328,15 @@
     query=String(query||"");replacement=String(replacement==null?"":replacement);options=options||{};
     if(!query){say("Enter text to find first.");return;}
     rememberEditor();
-    var count=0,pattern=searchPattern(query,options);
+    var count=0;
     Object.keys(files).forEach(function(name){files[name].split("\n").forEach(function(line){var re=searchPattern(query,options);while(re.exec(line)!==null)count++;});});
     if(!count){say("No matches to replace.");return;}
     if(!confirm("Replace "+count+" occurrence"+(count===1?"":"s")+" across all workspace files? This cannot be undone."))return;
     Object.keys(files).forEach(function(name){
       files[name]=files[name].split("\n").map(function(line){
         var re=searchPattern(query,options);
-        if(options.wholeWord)return line.replace(re,function(full,prefix,found){return (prefix||"")+replacement;});
-        return line.replace(re,replacement);
+        if(options.wholeWord)return line.replace(re,function(full,prefix){return (prefix||"")+replacement;});
+        return line.replace(re,function(){return replacement;});
       }).join("\n");
     });
     switchingFile=true;editor.value=files[activeFile];switchingFile=false;
