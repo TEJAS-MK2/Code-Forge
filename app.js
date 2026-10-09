@@ -327,7 +327,7 @@
     else if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="n"){event.preventDefault();newFile();}
   });
   function commandPalette() {
-    var old=document.getElementById("commandOverlay");if(old){old.remove();return;}
+    var old=document.querySelector("#commandOverlay");if(old){old.remove();return;}
     var commands=[
       {name:"Run preview",hint:"Ctrl + Enter",run:function(){renderPreview(true);}},
       {name:"Create new file",hint:"Ctrl + N",run:newFile},

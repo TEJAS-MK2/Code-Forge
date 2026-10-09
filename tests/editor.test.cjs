@@ -135,7 +135,7 @@ test("IDE workspace includes local explorer, file search, tabs and truthful pane
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
   for (const token of ['id="ideLayout"', 'id="sidePanel"', 'id="fileTabs"', 'data-view="explorer"', 'data-view="search"']) assert.ok(html.includes(token), token);
-  for (const token of ["code-forge-workspace-v2", "function newFile()", "function renameFile(", "function deleteFile(", "function searchFiles(", "function commandPalette()", "if(panelMode==="problems")"]) assert.ok(app.includes(token), token);
+  for (const token of ["code-forge-workspace-v2", "function newFile()", "function renameFile(", "function deleteFile(", "function searchFiles(", "function commandPalette()", 'if(panelMode==="problems")']) assert.ok(app.includes(token), token);
   assert.ok(css.includes(".activity-rail"));
   assert.ok(css.includes(".tree-file"));
 });
