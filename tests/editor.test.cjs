@@ -266,7 +266,7 @@ test("recent files persist locally and appear as workspace navigation", () => {
   const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
   assert.match(app, /code-forge-recent-files/);
   assert.match(app, /recentFiles=\[name\]\.concat/);
-  assert.match(app, /className="recent-file"/);
+  assert.match(app, /className="tree-file recent-file"/);
   assert.match(css, /\.recent-file/);
 });
 test("console filters preserve history and can show errors only", () => {
