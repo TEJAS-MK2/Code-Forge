@@ -185,7 +185,7 @@ test("programmatic file switches do not mark files as edited", () => {
 test("indentation setting updates CodeMirror's actual indent unit", () => {
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const source = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
-  assert.match(source, /import \{ indentUnit \} from "@codemirror\/language"/);
+  assert.match(source, /import \{ indentUnit, syntaxHighlighting, HighlightStyle \} from "@codemirror\/language"/);
   assert.match(app, /indentCompartment\.reconfigure\(Engine\.indentUnit\.of/);
 });
 
