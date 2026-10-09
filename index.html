@@ -23,8 +23,19 @@
       <button class="button button-primary" id="run" type="button">Run <small>Ctrl ↵</small></button>
     </div>
   </header>
+  <div class="viewbar">
+    <div class="viewbar-caption"><span class="status-dot"></span> Workspace</div>
+    <div class="viewbar-controls">
+      <div class="layout-switch" role="group" aria-label="Workspace layout">
+        <button class="layout-button" type="button" data-layout="split" aria-pressed="true" title="Editor and preview side by side">Split</button>
+        <button class="layout-button" type="button" data-layout="stack" aria-pressed="false" title="Editor above preview">Stack</button>
+        <button class="layout-button" type="button" data-layout="editor" aria-pressed="false" title="Focus on the editor">Editor</button>
+        <button class="layout-button" type="button" data-layout="preview" aria-pressed="false" title="Focus on the preview">Preview</button>
+      </div>
+    </div>
+  </div>
   <main>
-    <div class="workspace" id="workspace">
+    <div class="workspace layout-split" id="workspace">
       <section class="pane editor-pane" aria-label="Code editor">
         <div class="pane-heading">
           <div class="pane-title"><span class="pane-symbol" aria-hidden="true">⌘</span> Editor</div>
