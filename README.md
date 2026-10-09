@@ -1,32 +1,68 @@
 # Code Forge
 
-A lightweight browser-based HTML, CSS and JavaScript editor with a live preview.
+A small, local-first browser workspace for writing HTML, CSS and JavaScript. No account, backend, package installation or cloud authentication is required.
 
-## Features
+**Live site:** https://tejas-mk2.github.io/Code-Forge/
 
-- **Three editors in one:** switch between HTML, CSS and JavaScript.
-- **Live preview:** the preview refreshes as you edit; use Run code or Ctrl/Cmd + Enter to run on demand.
-- **Local autosave:** code is stored in this browser's localStorage. No account, cloud authentication, or backend is required.
-- **Export:** download a standalone HTML file containing the current HTML, CSS and JavaScript.
-- **Responsive layout:** editor and preview stack on smaller screens.
-- **No build step:** plain HTML, CSS and JavaScript.
+## What it does
 
-## Use it
+- **Three source files:** edit HTML, CSS and JavaScript in separate tabs.
+- **Live preview:** changes refresh the preview automatically; use **Run** or **Ctrl/⌘ + Enter** to run immediately.
+- **Runtime console:** view console output, warnings and JavaScript runtime errors without leaving the page.
+- **Local autosave:** your current project is saved to this browser's localStorage.
+- **Portable project backup:** export and import a JSON project file to move work between browsers or devices.
+- **Standalone HTML export:** download a single HTML file with your HTML, CSS and JavaScript combined.
+- **Adjustable workspace:** resize the editor/preview split on desktop; the layout stacks on smaller screens.
+- **Keyboard and accessibility basics:** keyboard shortcuts, visible focus styles, labeled editor controls and reduced-motion support.
+- **No build step:** plain HTML, CSS and JavaScript, with no third-party runtime dependency.
 
-1. Open the published site, or open index.html in a modern browser.
-2. Edit the HTML, CSS and JavaScript tabs.
-3. Inspect the live preview.
-4. Select **Export HTML** to download a portable copy.
+## Getting started
 
-Saved work is specific to this browser and device. Clearing site data or switching browsers may remove or hide local edits, so export important projects.
+1. Open the [live site](https://tejas-mk2.github.io/Code-Forge/) or open index.html in a modern browser.
+2. Choose the HTML, CSS or JS tab and edit the source.
+3. Check the live preview and console.
+4. Use **Backup JSON** to keep a portable copy of all three source files, or **Download HTML** for a standalone page.
 
-## GitHub Pages
+Saved work belongs to the current browser profile on the current device. Clearing site data or switching browsers can remove or hide local edits. Export important projects regularly.
 
-A GitHub Actions workflow publishes the repository root to GitHub Pages. In **Settings → Pages**, select **GitHub Actions** as the build and deployment source. The workflow runs on pushes to main and can also be started manually.
+## Keyboard shortcuts
 
-## Security
+| Shortcut | Action |
+| --- | --- |
+| Ctrl/⌘ + Enter | Run the current project |
+| Ctrl/⌘ + S | Save to this browser |
+| Tab | Insert two spaces |
 
-The preview runs in a sandboxed iframe. Code you write is executed in that preview, so only run code you trust. This is a client-side playground, not a server-side compiler or full production IDE.
+## Security notes
+
+The preview is rendered in a sandboxed iframe with scripts enabled and without same-origin access. This keeps the preview in an opaque origin, separate from the editor's origin. Code you write in the preview still executes, and can make network requests, so only run code you trust. This is a lightweight playground, not a production IDE or server-side compiler.
+
+Project content stays in browser-local storage unless you choose to export it or run code that sends it elsewhere. GitHub Pages serves the static app; there is no application backend or cloud sign-in.
+
+## Tests
+
+The repository includes Node.js regression tests for document generation, missing head handling, fragment wrapping, runtime diagnostics, script-tag escaping and project backup round-tripping.
+
+Run locally with Node.js 20 or newer:
+
+\`\`\`sh
+node --check core.js
+node --check app.js
+node --test tests/*.test.cjs
+\`\`\`
+
+GitHub Actions runs these checks before publishing the site to GitHub Pages.
+
+## Development
+
+The main files are:
+
+- index.html — accessible application structure.
+- styles.css — responsive visual system.
+- app.js — editor interactions, local persistence, preview and console.
+- core.js — document generation and portable project format.
+- tests/editor.test.cjs — regression tests.
+- .github/workflows/pages.yml — validation and GitHub Pages deployment.
 
 ## License
 
