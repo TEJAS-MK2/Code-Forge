@@ -49,6 +49,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .layout-button { min-height:27px; padding:5px 10px; border:1px solid transparent; border-radius:4px; background:transparent; color:var(--muted); font-size:11px; font-weight:600; }
 .layout-button:hover { color:var(--ink); }
 .layout-button[aria-pressed="true"] { border-color:var(--line-strong); background:var(--surface-soft); color:var(--ink); }
+.workspace.layout-split { grid-template-columns:minmax(0,1fr) 8px minmax(0,1fr); }
 .workspace.layout-stack { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(360px,1fr) minmax(320px,1fr); }
 .workspace.layout-stack .resize-handle { display:none; }
 .workspace.layout-editor { grid-template-columns:minmax(0,1fr); }
