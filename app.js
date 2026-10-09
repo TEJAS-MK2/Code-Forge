@@ -241,11 +241,12 @@
     persist(false);
     var blob = new Blob([Core.buildDocument(project.html, project.css, project.js, "")], { type: "text/html;charset=utf-8" });
     var url = URL.createObjectURL(blob);
-    var opened = window.open(url, "_blank", "noopener,noreferrer");
+    var opened = window.open(url, "_blank");
     if (!opened) {
       URL.revokeObjectURL(url);
       say("Pop-up blocked. Download the HTML file instead.");
     } else {
+      try { opened.opener = null; } catch (error) {}
       window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
     }
   });
