@@ -40,7 +40,7 @@ Requirements: Node.js 22 or newer and npm.
 2. Install development dependencies and build the static site:
 
    ```sh
-   npm install --no-package-lock --no-fund
+   npm ci --no-fund
    npm run build
    ```
 
