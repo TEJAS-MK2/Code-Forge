@@ -587,3 +587,23 @@ test("HTML CSS and JavaScript diagnostics and local diff use parser exports and 
   assert.match(core, /sourceURL=code-forge-user\.js/);
   assert.match(core, /code-forge-user\\\\\.js/);
 });
+
+ 
+test("security and accessibility boundaries stay explicit", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const core = fs.readFileSync(path.join(root, "core.js"), "utf8");
+  const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(html, /sandbox="allow-scripts"/);
+  assert.doesNotMatch(html, /allow-same-origin/);
+  assert.doesNotMatch(html, /<script[^>]+src="https?:/i, "runtime scripts should remain same-origin/local");
+  assert.match(app, /event\.source!==frame\.contentWindow/);
+  assert.match(app, /event\.data\.__codeForge!==currentChannel/);
+  assert.match(app, /MAX_IMPORT_BYTES\s*=\s*10\s*\*\s*1024\s*\*\s*1024/);
+  assert.match(app, /function closeDiff\(\)/);
+  assert.match(app, /event\.key==="Escape"/);
+  assert.match(css, /:focus-visible/);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(core, /function readProjectIndex\(value\)/);
+  assert.match(core, /function zipWorkspace\(files\)/);
+});
