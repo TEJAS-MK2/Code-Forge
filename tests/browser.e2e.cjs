@@ -431,6 +431,25 @@ async function main() {
     assert.ok(localSnapshots[0].files["e2e-renamed.md"] !== undefined, "Snapshot should include virtual files");
     console.log("PASS: named local projects switch independently and workspace snapshots persist locally");
 
+    // Touch-enabled mobile viewport and keyboard-height regression.
+    const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    try {
+      const mobilePage = await mobileContext.newPage();
+      await mobilePage.goto(origin, { waitUntil: "load", timeout: 20000 });
+      await mobilePage.locator('#editorHost .cm-content[contenteditable="true"]').tap();
+      await mobilePage.keyboard.insertText("mobile-touch-check");
+      await mobilePage.locator('button[data-view="search"]').tap();
+      assert.equal(await mobilePage.locator("#sidePanelTitle").textContent(), "SEARCH");
+      await mobilePage.setViewportSize({ width: 390, height: 600 });
+      const mobileDimensions = await mobilePage.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
+      assert.ok(mobileDimensions.document <= mobileDimensions.viewport + 1, "Mobile keyboard-height viewport should not introduce horizontal overflow");
+      assert.ok(mobileDimensions.body <= mobileDimensions.viewport + 1, "Mobile body should not overflow horizontally");
+      assert.ok(await mobilePage.locator("#editorHost .cm-editor").isVisible());
+      console.log("PASS: touch editing and reduced-height mobile viewport remain usable without horizontal overflow");
+    } finally {
+      await mobileContext.close();
+    }
+
     const invalidStoredWorkspace = JSON.stringify({ format: "code-forge-workspace", version: 99, files: {} });
     await page.addInitScript(() => {
       if (window.top === window) {
