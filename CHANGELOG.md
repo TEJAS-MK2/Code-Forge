@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-10 — Diagnostics and local diffs
+
+- Added HTML structure checks and CodeMirror parser diagnostics for HTML, CSS and JavaScript, with clickable source navigation.
+- Mapped preview runtime error stack locations back to user JavaScript and added an Open source action in Console.
+- Added bounded LCS line diffs against the latest local snapshot, rendered as an accessible text-only modal.
+- Added unit and Chromium E2E coverage for diagnostics, source navigation, diff output and parser-safe rendering.
+
+
 ## 2026-10-10 — Portable ZIP backup and mobile checks
 
 - Added a dependency-free ZIP writer that validates the workspace and includes every virtual file in a standard ZIP archive.

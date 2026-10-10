@@ -2,9 +2,9 @@ import { EditorView, basicSetup } from "codemirror";
 import { Compartment, EditorState } from "@codemirror/state";
 import { indentUnit, syntaxHighlighting, HighlightStyle } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
-import { html } from "@codemirror/lang-html";
-import { css } from "@codemirror/lang-css";
-import { javascript } from "@codemirror/lang-javascript";
+import { html, htmlLanguage } from "@codemirror/lang-html";
+import { css, cssLanguage } from "@codemirror/lang-css";
+import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 
 const syntax = HighlightStyle.define([
   { tag: tags.comment, color: "#aeb8a6" },
@@ -35,4 +35,4 @@ const theme = EditorView.theme({
   ".cm-foldPlaceholder": { border: "1px solid #485046", backgroundColor: "#242923", color: "#a0a99b" }
 }, { dark: true });
 
-window.CodeForgeEditorEngine = { EditorView, EditorState, Compartment, basicSetup, html, css, javascript, indentUnit, syntax, syntaxHighlighting, theme };
+window.CodeForgeEditorEngine = { EditorView, EditorState, Compartment, basicSetup, html, htmlLanguage, css, cssLanguage, javascript, javascriptLanguage, indentUnit, syntax, syntaxHighlighting, theme };

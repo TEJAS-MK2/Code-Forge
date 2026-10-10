@@ -13,6 +13,7 @@ No account, cloud authentication or application backend is required. Projects an
 - **Named browser-local projects** with isolated file sets, project creation/rename/deletion and project-specific recovery snapshots; no account or cloud sync is used.
 - **Browser-local workspace** with Explorer, tabs, additional virtual text files, rename/delete/duplicate actions, recent files, unsaved markers, autosave and a navigation warning if persistence fails.
 - **Portable project backups** in JSON and ZIP formats. ZIP includes every virtual file; JSON import validates the entire workspace before replacing the current one, and older three-file project backups remain supported.
+- **Problems panel** with HTML structure and HTML/CSS/JavaScript parser diagnostics, clickable source navigation for problems and runtime errors, and a local line diff against the latest snapshot. Parser diagnostics are lightweight syntax checks, not a full type checker or language server.
 - **Recovery safeguards** that preserve malformed stored workspace data when possible, expose a recovery export, avoid overwriting the only copy when preservation fails, and let you create or restore up to 20 named snapshots per project.
 - **Workspace search and replace** with previous/next navigation, case sensitivity, whole-word matching and a confirmation step before bulk replacement.
 - **Useful editor controls** including indentation, word wrap, font size, Go to Line, a command palette and four workspace layouts.

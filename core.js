@@ -39,12 +39,12 @@
       "var channel=" + channelLiteral + ";",
       "function send(level,args){try{parent.postMessage({__codeForge:channel,level:level,message:Array.prototype.map.call(args,function(v){if(typeof v==='string')return v;try{return JSON.stringify(v,function(k,x){return typeof x==='bigint'?String(x)+'n':x;});}catch(e){return String(v);}}).join(' ').slice(0,3000)},'*');}catch(e){}}",
       "['log','info','warn','error','debug'].forEach(function(level){var original=console[level]&&console[level].bind(console);console[level]=function(){send(level,arguments);if(original)original.apply(null,arguments);};});",
-      "window.addEventListener('error',function(e){send('error',[e.message+' ('+e.lineno+':'+e.colno+')']);});",
+      "window.addEventListener('error',function(e){var stack=e.error&&e.error.stack||'';var match=String(stack).match(/code-forge-user\\.js:(\\d+):(\\d+)/);var location=match?' (app.js:'+match[1]+':'+match[2]+')':' ('+e.lineno+':'+e.colno+')';send('error',[e.message+location]);});",
       "window.addEventListener('unhandledrejection',function(e){send('error',['Unhandled promise rejection:',e.reason]);});",
       "send('system',['Preview started']);",
       "})();"
     ].join("\n");
-    var scriptTag = "<script>\n" + runtime + "\n</script>\n<script>\n" + safeScript(js) + "\n</script>";
+    var scriptTag = "<script>\n" + runtime + "\n</script>\n<script>\n" + safeScript(js) + "\n//# sourceURL=code-forge-user.js\n</script>";
     if (/<\/body\s*>/i.test(source)) {
       source = source.replace(/<\/body\s*>/i, scriptTag + "\n</body>");
     } else if (/<\/html\s*>/i.test(source)) {
@@ -174,5 +174,27 @@
     return concat(localParts.concat(centralParts,[end]),localOffset+centralSize+end.length);
   }
 
-  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace, writeWorkspace: writeWorkspace, readProjectIndex: readProjectIndex, projectIndexJSON: projectIndexJSON, zipWorkspace: zipWorkspace };
+
+  function diffLines(before, after) {
+    var oldLines=String(before==null?"":before).split(/\r?\n/),newLines=String(after==null?"":after).split(/\r?\n/);
+    if(oldLines.length>600||newLines.length>600||oldLines.length*newLines.length>360000)throw new Error("This file is too large for an in-browser line diff (maximum 600 lines).");
+    var rows=oldLines.length+1,cols=newLines.length+1,table=new Array(rows);
+    for(var i=0;i<rows;i++)table[i]=new Uint16Array(cols);
+    for(var oi=oldLines.length-1;oi>=0;oi--)for(var ni=newLines.length-1;ni>=0;ni--){
+      table[oi][ni]=oldLines[oi]===newLines[ni]?table[oi+1][ni+1]+1:Math.max(table[oi+1][ni],table[oi][ni+1]);
+    }
+    var result=[],oldIndex=0,newIndex=0;
+    while(oldIndex<oldLines.length||newIndex<newLines.length){
+      if(oldIndex<oldLines.length&&newIndex<newLines.length&&oldLines[oldIndex]===newLines[newIndex]){
+        result.push({type:"context",text:oldLines[oldIndex],oldLine:oldIndex+1,newLine:newIndex+1});oldIndex++;newIndex++;
+      } else if(oldIndex<oldLines.length&&(newIndex>=newLines.length||table[oldIndex+1][newIndex]>=table[oldIndex][newIndex+1])){
+        result.push({type:"remove",text:oldLines[oldIndex],oldLine:oldIndex+1,newLine:null});oldIndex++;
+      } else {
+        result.push({type:"add",text:newLines[newIndex],oldLine:null,newLine:newIndex+1});newIndex++;
+      }
+    }
+    return result;
+  }
+
+  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace, writeWorkspace: writeWorkspace, readProjectIndex: readProjectIndex, projectIndexJSON: projectIndexJSON, zipWorkspace: zipWorkspace, diffLines: diffLines };
 });

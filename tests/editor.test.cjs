@@ -80,7 +80,8 @@ test("every static application element reference exists in the HTML", () => {
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
   const referencedIds = [...app.matchAll(/getElementById\("([^"]+)"\)/g)].map(match => match[1]);
-  const missing = [...new Set(referencedIds.filter(id => !ids.has(id)))];
+  const dynamicallyCreatedIds = new Set(["diffOverlay", "panel-tab-problems"]);
+  const missing = [...new Set(referencedIds.filter(id => !ids.has(id) && !dynamicallyCreatedIds.has(id)))];
   assert.deepEqual(missing, [], "Application references missing DOM elements");
 });
 
@@ -566,4 +567,23 @@ test("ZIP export and storage quota warnings are wired to visible recovery action
   assert.match(app, /Core\.zipWorkspace\(files\)/);
   assert.match(app, /Browser storage quota reached/);
   assert.match(core, /function zipWorkspace\(files\)/);
+});
+
+ 
+test("HTML CSS and JavaScript diagnostics and local diff use parser exports and safe text rendering", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const core = fs.readFileSync(path.join(root, "core.js"), "utf8");
+  const engine = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(engine, /htmlLanguage/);
+  assert.match(engine, /cssLanguage/);
+  assert.match(engine, /javascriptLanguage/);
+  assert.match(app, /function collectDiagnostics\(\)/);
+  assert.match(app, /node\.type\.isError/);
+  assert.match(app, /function showLocalDiff\(\)/);
+  assert.match(app, /message\.textContent=item\.file/);
+  assert.match(app, /row\.textContent=marker/);
+  assert.match(app, /function jumpToSource\(name,lineNumber,columnNumber\)/);
+  assert.match(core, /function diffLines\(before, after\)/);
+  assert.match(core, /sourceURL=code-forge-user\.js/);
+  assert.match(core, /code-forge-user\\\\\.js/);
 });
