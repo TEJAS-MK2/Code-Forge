@@ -510,7 +510,7 @@
       if(name!==activeFile&&editorStates[name]){
         var previousState=editorStates[name],nextDocument=files[name];
         if(previousState.doc.toString()!==nextDocument){
-          editorStates[name]=previousState.update({changes:{from:0,to:previousState.doc.length,insert:nextDocument}}).state;
+          editorStates[name]=previousState.update({changes:{from:0,to:previousState.doc.length,insert:nextDocument},annotations:[Engine.Transaction.userEvent.of("input"),Engine.Transaction.addToHistory.of(true)]}).state;
         }
       }
     });
