@@ -404,6 +404,33 @@ async function main() {
     console.log("PASS: document and body stay within 390px and 320px viewports");
 
     await page.setViewportSize({ width: 1280, height: 900 });
+
+    // Named projects are isolated and snapshots preserve the full virtual workspace.
+    const projectActionDialogs = ["new", "E2E Workspace"];
+    const projectDialogErrors = [];
+    const answerProjectDialogs = dialog => {
+      const answer = projectActionDialogs.shift();
+      if (dialog.type() !== "prompt" || answer === undefined) {
+        projectDialogErrors.push("Unexpected dialog: " + dialog.type() + " " + dialog.message());
+        return dialog.dismiss();
+      }
+      return dialog.accept(answer);
+    };
+    page.on("dialog", answerProjectDialogs);
+    await page.getByRole("button", { name: "Projects" }).click();
+    assert.deepEqual(projectActionDialogs, []);
+    assert.deepEqual(projectDialogErrors, []);
+    page.off("dialog", answerProjectDialogs);
+    assert.equal((await page.locator('#editorHost .cm-content[contenteditable="true"]').innerText()).includes("Make it"), true, "New project should start from its own starter files");
+    await page.getByLabel("Active project").selectOption({ label: "My Project" });
+    assert.equal(await page.locator("#projectSelect").inputValue(), "default");
+    await page.getByRole("button", { name: "Snapshot" }).click();
+    const localSnapshots = await page.evaluate(() => JSON.parse(localStorage.getItem("code-forge-snapshots-v1:default") || "[]"));
+    assert.ok(localSnapshots.length >= 1, "A snapshot should be stored locally for the active project");
+    assert.ok(localSnapshots[0].files["index.html"]);
+    assert.ok(localSnapshots[0].files["e2e-renamed.md"] !== undefined, "Snapshot should include virtual files");
+    console.log("PASS: named local projects switch independently and workspace snapshots persist locally");
+
     const invalidStoredWorkspace = JSON.stringify({ format: "code-forge-workspace", version: 99, files: {} });
     await page.addInitScript(() => {
       if (window.top === window) {
