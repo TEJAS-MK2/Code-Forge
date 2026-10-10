@@ -132,7 +132,7 @@
       if(!project||typeof project.id!=="string"||!/^[a-z0-9][a-z0-9-]{0,63}$/.test(project.id))throw new Error("Invalid project identifier.");
       if(typeof project.name!=="string")throw new Error("Invalid project name.");
       var name=project.name.trim();
-      if(!name||name.length>48||/[\\u0000-\\u001f\\u007f]/.test(name))throw new Error("Project names must contain 1–48 printable characters.");
+      if(!name||name.length>48||/[\u0000-\u001f\u007f]/.test(name))throw new Error("Project names must contain 1–48 printable characters.");
       var normalized=name.toLowerCase();
       if(ids[project.id]||names[normalized])throw new Error("Project identifiers and names must be unique.");
       ids[project.id]=true;names[normalized]=true;projects.push({id:project.id,name:name});
