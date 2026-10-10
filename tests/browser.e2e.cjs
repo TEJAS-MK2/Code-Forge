@@ -290,7 +290,7 @@ async function main() {
     await page.keyboard.press("Control+A");
     await page.keyboard.insertText("storage failure unsaved content");
     await page.waitForFunction(() => document.querySelector("#saveState")?.textContent === "Storage unavailable", null, { timeout: 7000 });
-    await page.locator("#fileTabs .file-tab-dirty").waitFor({ state: "visible", timeout: 3000 });
+    await page.locator("#fileTabs .file-tab-dirty").first().waitFor({ state: "visible", timeout: 3000 });
     const [unsavedDownload] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Backup JSON" }).click()
