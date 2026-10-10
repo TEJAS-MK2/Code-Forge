@@ -57,6 +57,7 @@ async function main() {
 
   let browser;
   const errors = [];
+  let allowExpectedConsoleErrors = false;
   try {
     const address = server.address();
     const origin = `http://127.0.0.1:${address.port}`;
@@ -65,7 +66,7 @@ async function main() {
     const page = await context.newPage();
     page.on("pageerror", error => errors.push("pageerror: " + error.message));
     page.on("console", message => {
-      if (message.type() === "error") errors.push("console: " + message.text());
+      if (message.type() === "error" && !allowExpectedConsoleErrors) errors.push("console: " + message.text());
     });
     page.on("requestfailed", request => {
       errors.push("requestfailed: " + request.url() + " — " + (request.failure()?.errorText || "unknown error"));
@@ -430,6 +431,49 @@ async function main() {
     assert.ok(localSnapshots[0].files["index.html"]);
     assert.ok(localSnapshots[0].files["e2e-renamed.md"] !== undefined, "Snapshot should include virtual files");
     console.log("PASS: named local projects switch independently and workspace snapshots persist locally");
+
+    // The Problems panel reports parser errors and opens the relevant source line.
+    await page.getByRole("tab", { name: "styles.css" }).click();
+    const diagnosticEditor = page.locator('#editorHost .cm-content[contenteditable="true"]');
+    await diagnosticEditor.click();
+    await page.keyboard.press("Control+A");
+    await page.keyboard.insertText("body { color: red;");
+    await page.getByRole("tab", { name: "Problems" }).click();
+    await page.locator("#consoleOutput .problem-line").first().waitFor({ state: "visible", timeout: 5000 });
+    const problemJump = page.getByRole("button", { name: /Open styles\.css line/ }).first();
+    await problemJump.click();
+    assert.equal(await page.locator('#fileTabs button[aria-selected="true"]').innerText().then(text => text.includes("styles.css")), true);
+    console.log("PASS: parser diagnostics are actionable and navigate to their source file");
+
+    // Runtime errors from user JavaScript should include a clickable source location.
+    allowExpectedConsoleErrors = true;
+    await page.getByRole("tab", { name: "app.js" }).click();
+    const runtimeEditor = page.locator('#editorHost .cm-content[contenteditable="true"]');
+    await runtimeEditor.click();
+    await page.keyboard.press("Control+A");
+    await page.keyboard.insertText('throw new Error("diagnostic-click-test");');
+    await page.getByRole("tab", { name: "Console" }).click();
+    await page.getByRole("button", { name: "Run" }).click();
+    await page.locator('#consoleOutput .console-jump[aria-label^="Open app.js line"]').waitFor({ state: "visible", timeout: 5000 });
+    await page.locator('#consoleOutput .console-jump[aria-label^="Open app.js line"]').first().click();
+    assert.equal(await page.locator('#fileTabs button[aria-selected="true"]').innerText().then(text => text.includes("app.js")), true);
+    allowExpectedConsoleErrors = false;
+    console.log("PASS: runtime console errors link back to user JavaScript source");
+
+    // Compare the active file against the project's latest local snapshot.
+    await page.getByRole("tab", { name: "styles.css" }).click();
+    await page.locator('#editorHost .cm-content[contenteditable="true"]').click();
+    await page.keyboard.press("Control+A");
+    await page.keyboard.insertText("body { color: #b8e986; }");
+    await page.keyboard.press("Control+Shift+P");
+    const palette = page.locator("#commandOverlay");
+    await palette.locator(".command-input").fill("Compare active file with latest snapshot");
+    await palette.getByRole("button", { name: /Compare active file/ }).click();
+    await page.locator("#diffOverlay").waitFor({ state: "visible", timeout: 5000 });
+    assert.ok(await page.locator("#diffOverlay .diff-add").count() > 0);
+    assert.ok(await page.locator("#diffOverlay .diff-remove").count() > 0);
+    await page.getByRole("button", { name: "Close local diff" }).click();
+    console.log("PASS: local Git-style diff shows additions and removals against a snapshot");
 
     // Touch-enabled mobile viewport and keyboard-height regression.
     const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
