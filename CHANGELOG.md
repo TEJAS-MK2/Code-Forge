@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-10 — Local projects and snapshots
+
+- Added named browser-local projects with isolated workspaces, safe project-index validation, project switching, rename and delete actions.
+- Added up to 20 project-specific snapshots with validation before restore and command-palette access.
+- Kept the active workspace compatibility key for existing backups and migration from single-workspace installations.
+- Added unit, UI-wiring and Chromium regression coverage for project isolation and snapshot persistence.
+
+
 ## 2026-10-10 — Editing safety
 
 - Preserved independent CodeMirror undo/redo histories per file across tab switches and renames; workspace replacement resets editor history instead of exposing unrelated edits.
