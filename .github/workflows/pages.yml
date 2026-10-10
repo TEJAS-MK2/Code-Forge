@@ -37,6 +37,9 @@ jobs:
           test -s styles.css
           test -s core.js
           test -s app.js
+          test -s sw.js
+          test -s manifest.webmanifest
+          test -s icon.svg
           test -s src/editor.js
           test -s scripts/build.cjs
           test -s tests/editor.test.cjs
@@ -64,6 +67,8 @@ jobs:
           grep -q 'src="./editor.bundle.js"' index.html
           grep -q 'src="./core.js"' index.html
           grep -q 'src="./app.js"' index.html
+          grep -q 'rel="manifest" href="./manifest.webmanifest"' index.html
+          grep -q 'navigator.serviceWorker.register("./sw.js")' app.js
           grep -q 'sandbox="allow-scripts"' index.html
           if grep -q 'allow-same-origin' index.html; then
             echo "Preview must not receive same-origin privileges"
@@ -73,6 +78,7 @@ jobs:
         run: |
           node --check core.js
           node --check app.js
+          node --check sw.js
           node --check scripts/build.cjs
           node --check tests/browser.e2e.cjs
       - name: Build the local-first static site
@@ -83,6 +89,9 @@ jobs:
           test -s dist/styles.css
           test -s dist/core.js
           test -s dist/app.js
+          test -s dist/sw.js
+          test -s dist/manifest.webmanifest
+          test -s dist/icon.svg
           test -s dist/editor.bundle.js
           grep -q 'editor.bundle.js' dist/index.html
       - name: Run unit and repository regression tests
@@ -134,7 +143,7 @@ jobs:
           done
 
           grep -Fq '<title>Code Forge — Browser Editor</title>' "$page_file"
-          for asset in styles.css core.js app.js editor.bundle.js; do
+          for asset in styles.css core.js app.js editor.bundle.js sw.js manifest.webmanifest icon.svg; do
             echo "Checking ${PAGE_URL}${asset}"
             curl --fail --silent --show-error --location --output /dev/null "${PAGE_URL}${asset}"
           done
