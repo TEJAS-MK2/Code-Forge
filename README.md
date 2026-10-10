@@ -80,7 +80,7 @@ Additional virtual text files are included in workspace backups, but they are no
 
 ## Data and security
 
-Code Forge stores the workspace and editor preferences in browser-local storage. It does not provide cloud sync, user accounts or a server-side database. Browser storage is not a backup: clear site data, browser-profile changes, private browsing and device loss may make local projects unavailable. Export important projects regularly. If browser storage reaches its quota, Code Forge warns you to export a JSON or ZIP backup before continuing.
+Code Forge stores the workspace and editor preferences in browser-local storage. It does not provide cloud sync, user accounts or a server-side database. Browser storage is not a backup: clear site data, browser-profile changes, private browsing and device loss may make local projects unavailable. Export important projects regularly. If browser storage reaches its quota, Code Forge warns you to export a JSON or ZIP backup before continuing. Snapshots are also subject to browser storage limits; a failed snapshot save is reported and never shown as successful.
 
 The preview uses a sandboxed iframe with scripts enabled but without `allow-same-origin`. That keeps preview code on an opaque origin, separate from the editor's origin. **Sandboxing does not make arbitrary code safe:** code you choose to run can still perform network requests, display deceptive content or affect the preview itself. Run only code you trust, and do not paste secrets into a project or issue report.
 
