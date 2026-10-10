@@ -126,6 +126,23 @@ async function main() {
     assert.equal(await page.locator("#toast").textContent(), "Code Forge installed.");
     console.log("PASS: browser install prompt reveals and invokes the install action");
 
+    // Each file must keep an independent undo/redo history after switching tabs.
+    const historyMarker = "<!-- per-file-history-regression -->";
+    const historyEditor = page.locator('#editorHost .cm-content[contenteditable="true"]');
+    await historyEditor.click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.insertText(historyMarker);
+    await page.getByRole("tab", { name: "styles.css" }).click();
+    await page.getByRole("tab", { name: "index.html" }).click();
+    await historyEditor.click();
+    await page.keyboard.press("Control+Z");
+    assert.equal((await historyEditor.innerText()).includes(historyMarker), false, "Undo should affect the active file history");
+    await page.keyboard.press("Control+Shift+Z");
+    assert.equal((await historyEditor.innerText()).includes(historyMarker), true, "Redo should restore the active file change");
+    await page.keyboard.press("Control+Z");
+    console.log("PASS: per-file undo/redo history survives tab switching");
+
+
     // A separate context verifies offline caching without contaminating the main
     // interaction suite's network diagnostics or local workspace.
     const offlineContext = await browser.newContext({ viewport: { width: 1024, height: 768 } });
@@ -347,6 +364,12 @@ async function main() {
     await page.keyboard.insertText("storage failure unsaved content");
     await page.waitForFunction(() => document.querySelector("#saveState")?.textContent === "Storage unavailable", null, { timeout: 7000 });
     await page.locator("#fileTabs .file-tab-dirty").first().waitFor({ state: "visible", timeout: 3000 });
+    const unloadGuard = await page.evaluate(() => {
+      const event = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(event);
+      return event.defaultPrevented;
+    });
+    assert.equal(unloadGuard, true, "Unsaved edits must block navigation when local storage is unavailable");
     const [unsavedDownload] = await Promise.all([
       page.waitForEvent("download"),
       page.getByRole("button", { name: "Backup JSON" }).click()
