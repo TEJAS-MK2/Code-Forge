@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -35,6 +35,14 @@ jobs:
           name: code-forge-package-lock
           path: package-lock.json
           retention-days: 1
+      - name: Bootstrap the committed npm lockfile
+        if: hashFiles('package-lock.json') == ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: lock npm dependencies"
+          git push origin HEAD:main
       - name: Install locked build and test dependencies
         run: npm ci --no-fund
       - name: Fail on high or critical dependency vulnerabilities
