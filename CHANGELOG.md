@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-10
+
+- Added Chromium end-to-end coverage proving malformed workspace imports leave existing local data untouched.
+- Added a real-browser storage-quota failure regression that checks the unsaved state remains visible and a complete backup can still be exported.
+
+
 ## 2026-10-09
 
 - Re-enabled npm's install-time vulnerability audit in CI and aligned contributor setup commands so dependency advisories are visible instead of being suppressed.
