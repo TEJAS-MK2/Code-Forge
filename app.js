@@ -24,6 +24,7 @@
   }
   var projectRegistry=readProjectRegistry();
   var activeProjectId=projectRegistry.activeId;
+  try { if(!localStorage.getItem("code-forge-workspace-v2")){var activeStored=localStorage.getItem(PROJECT_DATA_PREFIX+activeProjectId);if(activeStored)localStorage.setItem("code-forge-workspace-v2",activeStored);} } catch(e) {}
   function saveProjectRegistry() {
     try { localStorage.setItem(PROJECT_INDEX_KEY,Core.projectIndexJSON(projectRegistry));return true; }
     catch(error) { say("Project list could not be saved. Browser storage may be full.");return false; }
