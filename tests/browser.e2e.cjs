@@ -143,6 +143,44 @@ async function main() {
     await page.keyboard.press("Control+Z");
     console.log("PASS: per-file undo/redo history survives tab switching");
 
+    // Cross-file replacement is undoable independently in every affected file.
+    const crossFileToken = "cf-cross-file-regression-token";
+    const crossFileReplacement = "cf-cross-file-regression-replaced";
+    await historyEditor.click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.insertText("<!-- " + crossFileToken + " -->");
+    await page.getByRole("tab", { name: "styles.css" }).click();
+    await page.locator('#editorHost .cm-content[contenteditable="true"]').click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.insertText("/* " + crossFileToken + " */");
+    await page.locator('button[data-view="search"]').click();
+    await page.getByLabel("Find text in workspace").fill(crossFileToken);
+    await page.getByLabel("Replacement text").fill(crossFileReplacement);
+    assert.equal(await page.locator("#searchSummary").textContent().then(text => text.startsWith("2 matches")), true);
+    page.once("dialog", dialog => dialog.accept());
+    await page.getByRole("button", { name: "Replace all in workspace" }).click();
+    const replacedWorkspace = await page.evaluate(() => JSON.parse(localStorage.getItem("code-forge-workspace-v2")).files);
+    assert.ok(replacedWorkspace["index.html"].includes(crossFileReplacement));
+    assert.ok(replacedWorkspace["styles.css"].includes(crossFileReplacement));
+
+    await page.getByRole("tab", { name: "index.html" }).click();
+    await historyEditor.click();
+    await page.keyboard.press("Control+Z");
+    assert.ok((await historyEditor.innerText()).includes(crossFileToken), "Undo should restore the token in index.html");
+    await page.getByRole("tab", { name: "styles.css" }).click();
+    const replaceEditor = page.locator('#editorHost .cm-content[contenteditable="true"]');
+    await replaceEditor.click();
+    await page.keyboard.press("Control+Z");
+    assert.ok((await replaceEditor.innerText()).includes(crossFileToken), "Undo should restore the token in styles.css");
+    await page.keyboard.press("Control+Z");
+    assert.equal((await replaceEditor.innerText()).includes(crossFileToken), false, "The original CSS marker should be undoable separately");
+    await page.getByRole("tab", { name: "index.html" }).click();
+    await historyEditor.click();
+    await page.keyboard.press("Control+Z");
+    assert.equal((await historyEditor.innerText()).includes(crossFileToken), false, "The original HTML marker should be undoable separately");
+    console.log("PASS: cross-file search/replace is independently undoable per file");
+
+
 
     // A separate context verifies offline caching without contaminating the main
     // interaction suite's network diagnostics or local workspace.
