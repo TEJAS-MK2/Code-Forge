@@ -1,5 +1,5 @@
 import { EditorView, basicSetup } from "codemirror";
-import { Compartment } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import { indentUnit, syntaxHighlighting, HighlightStyle } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import { html } from "@codemirror/lang-html";
@@ -35,4 +35,4 @@ const theme = EditorView.theme({
   ".cm-foldPlaceholder": { border: "1px solid #485046", backgroundColor: "#242923", color: "#a0a99b" }
 }, { dark: true });
 
-window.CodeForgeEditorEngine = { EditorView, Compartment, basicSetup, html, css, javascript, indentUnit, syntax, syntaxHighlighting, theme };
+window.CodeForgeEditorEngine = { EditorView, EditorState, Compartment, basicSetup, html, css, javascript, indentUnit, syntax, syntaxHighlighting, theme };

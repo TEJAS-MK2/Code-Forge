@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-10 — Editing safety
+
+- Preserved independent CodeMirror undo/redo histories per file across tab switches and renames; workspace replacement resets editor history instead of exposing unrelated edits.
+- Added a before-unload guard when local persistence fails or unsaved state remains, while keeping successful autosave navigation unobstructed.
+- Added regression coverage for per-file undo/redo and failed-storage navigation protection.
+
+
 ## 2026-10-10 — Offline workspace
 
 - Added an installable web-app manifest and a matching graphite/lime SVG icon.

@@ -179,7 +179,7 @@ test("programmatic file switches do not mark files as edited", () => {
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   assert.match(app, /var switchingFile = false/);
   assert.match(app, /if\(update\.docChanged&&!switchingFile\)emit\("input"\)/);
-  assert.match(app, /switchingFile=true;editorView\.dispatch/);
+  assert.match(app, /switchingFile=true;\s*if\(!editorStates\[name\]\)editorStates\[name\]=makeEditorState\(name\);\s*editorView\.setState\(editorStates\[name\]\)/);
 });
 
 test("indentation setting updates CodeMirror's actual indent unit", () => {
@@ -518,4 +518,22 @@ test("install action is hidden until the browser offers installation", () => {
   assert.match(app, /promptEvent\.prompt\(\)/);
   assert.match(app, /window\.addEventListener\("appinstalled"/);
   assert.match(styles, /\.install-button\[hidden\]/);
+});
+
+ 
+test("editor states preserve per-file undo and redo history", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const editorSource = fs.readFileSync(path.join(root, "src/editor.js"), "utf8");
+  assert.match(editorSource, /EditorState/);
+  assert.match(app, /var editorStates = Object\.create\(null\)/);
+  assert.match(app, /function makeEditorState\(name\)/);
+  assert.match(app, /editorStates\[activeFile\]=editorView\.state/);
+  assert.match(app, /editorView\.setState\(editorStates\[name\]\)/);
+  assert.match(app, /delete editorStates\[oldName\]/);
+});
+
+test("navigation warns when local persistence fails and unsaved work remains", () => {
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  assert.match(app, /window\.addEventListener\("beforeunload",function\(event\)/);
+  assert.match(app, /event\.preventDefault\(\);event\.returnValue=""/);
 });

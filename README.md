@@ -8,9 +8,9 @@ No account, cloud authentication or application backend is required. Projects an
 
 ## Features
 
-- **CodeMirror 6 editor** with HTML, CSS and JavaScript language support, line numbers, completion, bracket matching, folding, search and undo/redo.
+- **CodeMirror 6 editor** with HTML, CSS and JavaScript language support, line numbers, completion, bracket matching, folding, search and per-file undo/redo history that survives tab switching.
 - **Live sandboxed preview** with Run/Refresh controls, desktop/tablet/phone viewport presets and a separate-window export option.
-- **Browser-local workspace** with Explorer, tabs, additional virtual text files, rename/delete/duplicate actions, recent files, unsaved markers and autosave.
+- **Browser-local workspace** with Explorer, tabs, additional virtual text files, rename/delete/duplicate actions, recent files, unsaved markers, autosave and a navigation warning if persistence fails.
 - **Portable project backups** in JSON format. Import validates the entire workspace before replacing the current one; older three-file project backups remain supported.
 - **Recovery safeguards** that preserve malformed stored workspace data when possible, expose a recovery export, and avoid overwriting the only copy when preservation fails.
 - **Workspace search and replace** with previous/next navigation, case sensitivity, whole-word matching and a confirmation step before bulk replacement.
