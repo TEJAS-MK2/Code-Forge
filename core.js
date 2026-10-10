@@ -142,5 +142,37 @@
   }
   function projectIndexJSON(index) { return JSON.stringify(readProjectIndex(index),null,2); }
 
-  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace, writeWorkspace: writeWorkspace, readProjectIndex: readProjectIndex, projectIndexJSON: projectIndexJSON };
+
+  function zipWorkspace(files) {
+    var checked=readWorkspace({format:"code-forge-workspace",version:2,files:files});
+    var encoder=new TextEncoder(),crcTable=new Uint32Array(256);
+    for(var n=0;n<256;n++){var value=n;for(var bit=0;bit<8;bit++)value=(value&1)?(0xedb88320^(value>>>1)):(value>>>1);crcTable[n]=value>>>0;}
+    function crc32(bytes){var crc=0xffffffff;for(var i=0;i<bytes.length;i++)crc=crcTable[(crc^bytes[i])&0xff]^(crc>>>8);return (crc^0xffffffff)>>>0;}
+    function concat(parts,total){var result=new Uint8Array(total),offset=0;parts.forEach(function(part){result.set(part,offset);offset+=part.length;});return result;}
+    var localParts=[],centralParts=[],localOffset=0,centralSize=0,entries=[];
+    Object.keys(checked).sort().forEach(function(name){
+      var nameBytes=encoder.encode(name),data=encoder.encode(checked[name]),crc=crc32(data);
+      if(nameBytes.length>65535||data.length>0xffffffff)throw new Error("A ZIP entry exceeds the supported size.");
+      var local=new Uint8Array(30+nameBytes.length),lv=new DataView(local.buffer);
+      lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0x0800,true);
+      lv.setUint16(8,0,true);lv.setUint16(10,0,true);lv.setUint16(12,0x21,true);
+      lv.setUint32(14,crc,true);lv.setUint32(18,data.length,true);lv.setUint32(22,data.length,true);
+      lv.setUint16(26,nameBytes.length,true);lv.setUint16(28,0,true);local.set(nameBytes,30);
+      localParts.push(local,data);localOffset+=local.length+data.length;
+      var central=new Uint8Array(46+nameBytes.length),cv=new DataView(central.buffer);
+      cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);
+      cv.setUint16(8,0x0800,true);cv.setUint16(10,0,true);cv.setUint16(12,0,true);cv.setUint16(14,0x21,true);
+      cv.setUint32(16,crc,true);cv.setUint32(20,data.length,true);cv.setUint32(24,data.length,true);
+      cv.setUint16(28,nameBytes.length,true);cv.setUint16(30,0,true);cv.setUint16(32,0,true);
+      cv.setUint16(34,0,true);cv.setUint16(36,0,true);cv.setUint32(38,0,true);cv.setUint32(42,localOffset-local.length-data.length,true);
+      central.set(nameBytes,46);centralParts.push(central);centralSize+=central.length;entries.push(name);
+    });
+    var centralOffset=localOffset,end=new Uint8Array(22),ev=new DataView(end.buffer);
+    ev.setUint32(0,0x06054b50,true);ev.setUint16(4,0,true);ev.setUint16(6,0,true);
+    ev.setUint16(8,entries.length,true);ev.setUint16(10,entries.length,true);
+    ev.setUint32(12,centralSize,true);ev.setUint32(16,centralOffset,true);ev.setUint16(20,0,true);
+    return concat(localParts.concat(centralParts,[end]),localOffset+centralSize+end.length);
+  }
+
+  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace, writeWorkspace: writeWorkspace, readProjectIndex: readProjectIndex, projectIndexJSON: projectIndexJSON, zipWorkspace: zipWorkspace };
 });
