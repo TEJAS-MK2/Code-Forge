@@ -90,3 +90,19 @@ test("project index JSON is normalized and versioned", () => {
   assert.equal(JSON.parse(json).projects[0].name, "Local Project");
   assert.equal(JSON.parse(json).version, 1);
 });
+
+ 
+test("ZIP workspace export contains local headers, a central directory and every virtual file", () => {
+  const archive = Buffer.from(Core.zipWorkspace(sampleFiles));
+  assert.equal(archive.readUInt32LE(0), 0x04034b50);
+  assert.ok(archive.includes(Buffer.from("index.html")));
+  assert.ok(archive.includes(Buffer.from("styles.css")));
+  assert.ok(archive.includes(Buffer.from("notes.md")));
+  assert.ok(archive.includes(Buffer.from("A workspace-only file.")));
+  assert.ok(archive.includes(Buffer.from([0x50, 0x4b, 0x01, 0x02])), "central directory signature should be present");
+  assert.ok(archive.includes(Buffer.from([0x50, 0x4b, 0x05, 0x06])), "end-of-central-directory signature should be present");
+});
+
+test("ZIP export validates workspace input before creating an archive", () => {
+  assert.throws(() => Core.zipWorkspace({ "index.html": "<h1>Only one file</h1>" }), /must include|valid Code Forge project/i);
+});

@@ -12,7 +12,7 @@ No account, cloud authentication or application backend is required. Projects an
 - **Live sandboxed preview** with Run/Refresh controls, desktop/tablet/phone viewport presets and a separate-window export option.
 - **Named browser-local projects** with isolated file sets, project creation/rename/deletion and project-specific recovery snapshots; no account or cloud sync is used.
 - **Browser-local workspace** with Explorer, tabs, additional virtual text files, rename/delete/duplicate actions, recent files, unsaved markers, autosave and a navigation warning if persistence fails.
-- **Portable project backups** in JSON format. Import validates the entire workspace before replacing the current one; older three-file project backups remain supported.
+- **Portable project backups** in JSON and ZIP formats. ZIP includes every virtual file; JSON import validates the entire workspace before replacing the current one, and older three-file project backups remain supported.
 - **Recovery safeguards** that preserve malformed stored workspace data when possible, expose a recovery export, avoid overwriting the only copy when preservation fails, and let you create or restore up to 20 named snapshots per project.
 - **Workspace search and replace** with previous/next navigation, case sensitivity, whole-word matching and a confirmation step before bulk replacement.
 - **Useful editor controls** including indentation, word wrap, font size, Go to Line, a command palette and four workspace layouts.
@@ -60,7 +60,7 @@ The end-to-end test starts its own temporary local static server and uses an iso
 1. Edit `index.html`, `styles.css` or `app.js` in the editor.
 2. Choose **Run** or press **Ctrl/⌘ + Enter** to refresh the preview.
 3. Use Explorer to open existing files or create additional browser-local text files.
-4. Use **Backup JSON** to export every workspace file. Import is validated before it can replace your open workspace.
+4. Use **Backup JSON** or **Export ZIP** to export every workspace file, including virtual files. Import is validated before it can replace your open workspace.
 5. Use **Download HTML** to export a standalone document made from the three preview entry files.
 6. Use **Projects** to create, rename or delete isolated local projects; use **Snapshot** or the command palette to save a recovery point and restore it later.
 
@@ -79,7 +79,7 @@ Additional virtual text files are included in workspace backups, but they are no
 
 ## Data and security
 
-Code Forge stores the workspace and editor preferences in browser-local storage. It does not provide cloud sync, user accounts or a server-side database. Browser storage is not a backup: clear site data, browser-profile changes, private browsing and device loss may make local projects unavailable. Export important projects regularly.
+Code Forge stores the workspace and editor preferences in browser-local storage. It does not provide cloud sync, user accounts or a server-side database. Browser storage is not a backup: clear site data, browser-profile changes, private browsing and device loss may make local projects unavailable. Export important projects regularly. If browser storage reaches its quota, Code Forge warns you to export a JSON or ZIP backup before continuing.
 
 The preview uses a sandboxed iframe with scripts enabled but without `allow-same-origin`. That keeps preview code on an opaque origin, separate from the editor's origin. **Sandboxing does not make arbitrary code safe:** code you choose to run can still perform network requests, display deceptive content or affect the preview itself. Run only code you trust, and do not paste secrets into a project or issue report.
 

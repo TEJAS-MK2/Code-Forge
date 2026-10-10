@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-10 — Portable ZIP backup and mobile checks
+
+- Added a dependency-free ZIP writer that validates the workspace and includes every virtual file in a standard ZIP archive.
+- Added an explicit storage-quota warning that points to JSON and ZIP exports when local saves fail.
+- Added touch-enabled Chromium coverage for editor input, explorer interaction and reduced-height mobile viewports.
+- Added ZIP archive and invalid-input regression tests.
+
+
 ## 2026-10-10 — Local projects and snapshots
 
 - Added named browser-local projects with isolated workspaces, safe project-index validation, project switching, rename and delete actions.
