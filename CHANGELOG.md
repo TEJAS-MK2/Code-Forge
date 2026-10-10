@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-10 — Offline workspace
+
+- Added an installable web-app manifest and a matching graphite/lime SVG icon.
+- Added network-first app-shell caching so the editor can reopen offline after a successful visit.
+- Kept project data in browser-local storage; no backend, account or cloud sync was introduced.
+- Added Chromium coverage for an offline reload and CI checks for every published app-shell asset.
+
 ## 2026-10-10 — Studio polish
 
 - Restored the intended graphite-and-muted-lime design system and removed a conflicting blue-theme override.
