@@ -25,6 +25,14 @@ test("contributor guide documents reproducible checks and the local-first constr
   }
 });
 
+test("setup guides use the committed lockfile for reproducible installs", () => {
+  for (const file of ["README.md", "CONTRIBUTING.md"]) {
+    const guide = read(file);
+    assert.match(guide, /npm ci --no-fund/, `${file} should install the committed lockfile`);
+    assert.doesNotMatch(guide, /npm install --no-package-lock/, `${file} should not bypass the lockfile`);
+  }
+});
+
 test("security policy provides private disclosure instructions and describes preview limitations", () => {
   const policy = read("SECURITY.md");
   for (const value of ["Report a vulnerability", "privately", "sandboxed iframe", "network requests", "local storage", "public issue"]) {
