@@ -302,7 +302,7 @@
       var tag=document.createElement("span");tag.className="console-level";tag.textContent=entry.level;
       var msg=document.createElement("span");msg.className="console-message";msg.textContent=entry.message;
       row.append(time,tag,msg);
-      var location=entry.level==="error"&&entry.message.match(/\\bapp\\.js:(\\d+):(\\d+)\\b/);
+      var location=entry.level==="error"&&entry.message.match(/\bapp\.js:(\d+):(\d+)\b/);
       if(location){var jump=document.createElement("button");jump.type="button";jump.className="console-jump";jump.textContent="Open source";jump.setAttribute("aria-label","Open app.js line "+location[1]);jump.addEventListener("click",function(){jumpToSource("app.js",Number(location[1]),Number(location[2]));});row.append(jump);}
       consoleOutput.appendChild(row);
     });
@@ -634,7 +634,7 @@
     function add(name,source,offset,message) {
       if(diagnostics.length>=200)return;
       offset=Math.max(0,Math.min(source.length,offset||0));
-      var prefix=source.slice(0,offset),line=prefix.split("\\n").length,column=prefix.length-prefix.lastIndexOf("\\n");
+      var prefix=source.slice(0,offset),line=prefix.split("\n").length,column=prefix.length-prefix.lastIndexOf("\\n");
       var key=name+":"+line+":"+column+":"+message;if(seen[key])return;seen[key]=true;
       diagnostics.push({file:name,line:line,column:column,from:offset,message:message});
     }
@@ -650,16 +650,16 @@
         tree.iterate({enter:function(node){if(node.type.isError)add(target.name,source,node.from,"Unexpected or incomplete syntax");}});
       } catch(error) { add(target.name,source,0,"Could not parse this file"); }
       if(target.name==="index.html") {
-        var markup=source.replace(/<!--[\\s\\S]*?-->/g,"").replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script\\s*>/gi,"").replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style\\s*>/gi,"");
+        var markup=source.replace(/<!--[\s\S]*?-->/g,"").replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi,"").replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi,"");
         var voidTags={area:1,base:1,br:1,col:1,embed:1,hr:1,img:1,input:1,link:1,meta:1,param:1,source:1,track:1,wbr:1};
-        var stack=[],pattern=/<\\/?([A-Za-z][A-Za-z0-9:-]*)\\b[^>]*>/g,match;
+        var stack=[],pattern=/<\/?([A-Za-z][A-Za-z0-9:-]*)\b[^>]*>/g,match;
         while((match=pattern.exec(markup))!==null) {
           var token=match[0],tag=match[1].toLowerCase();
           if(token.charAt(1)==="/") {
             var found=-1;for(var si=stack.length-1;si>=0;si--)if(stack[si].tag===tag){found=si;break;}
             if(found<0)add(target.name,source,match.index,"Unexpected closing tag </"+tag+">");
             else stack.splice(found);
-          } else if(!voidTags[tag]&&!/\\/\\s*>$/.test(token))stack.push({tag:tag,from:match.index});
+          } else if(!voidTags[tag]&&!/\/\s*>$/.test(token))stack.push({tag:tag,from:match.index});
         }
         stack.slice(-10).forEach(function(open){add(target.name,source,open.from,"Missing closing tag </"+open.tag+">");});
       }
