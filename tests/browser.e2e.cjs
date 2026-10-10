@@ -433,22 +433,25 @@ async function main() {
     console.log("PASS: named local projects switch independently and workspace snapshots persist locally");
 
     // Snapshot quota failure must never claim a snapshot was saved.
-    const originalSnapshotSetItem = await page.evaluate(() => {
+    await page.evaluate(() => {
       const storage = Storage.prototype;
+      Object.defineProperty(storage, "__codeForgeOriginalSetItem", { value: storage.setItem, configurable: true });
       const original = storage.setItem;
       storage.setItem = function (key, value) {
         if (key === "code-forge-snapshots-v1:default") {
-          const error = new DOMException("Quota exceeded", "QuotaExceededError");
-          throw error;
+          throw new DOMException("Quota exceeded", "QuotaExceededError");
         }
         return original.call(this, key, value);
       };
-      return true;
     });
-    assert.equal(originalSnapshotSetItem, true);
     await page.getByRole("button", { name: "Snapshot" }).click();
     await page.getByText(/Snapshot could not be saved/).waitFor({ state: "visible", timeout: 3000 });
-    await page.evaluate(() => { Storage.prototype.setItem = Storage.prototype.__unusedOriginal || Storage.prototype.setItem; });
+    await page.evaluate(() => {
+      if (Storage.prototype.__codeForgeOriginalSetItem) {
+        Storage.prototype.setItem = Storage.prototype.__codeForgeOriginalSetItem;
+        delete Storage.prototype.__codeForgeOriginalSetItem;
+      }
+    });
 
 
     // The Problems panel reports parser errors and opens the relevant source line.
