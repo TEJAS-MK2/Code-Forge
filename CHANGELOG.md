@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-10 — Accessibility and security hardening
+
+- Hardened snapshot quota handling so a first snapshot that cannot be written is never reported as saved.
+- Restored focus when closing the local diff and kept Escape/backdrop dismissal keyboard-accessible.
+- Added regression checks for sandbox isolation, local-only scripts, message-channel validation, import limits, visible focus states and reduced-motion support.
+
+
 ## 2026-10-10 — Diagnostics and local diffs
 
 - Added HTML structure checks and CodeMirror parser diagnostics for HTML, CSS and JavaScript, with clickable source navigation.
