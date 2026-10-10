@@ -10,9 +10,10 @@ No account, cloud authentication or application backend is required. Projects an
 
 - **CodeMirror 6 editor** with HTML, CSS and JavaScript language support, line numbers, completion, bracket matching, folding, search and per-file undo/redo history that survives tab switching.
 - **Live sandboxed preview** with Run/Refresh controls, desktop/tablet/phone viewport presets and a separate-window export option.
+- **Named browser-local projects** with isolated file sets, project creation/rename/deletion and project-specific recovery snapshots; no account or cloud sync is used.
 - **Browser-local workspace** with Explorer, tabs, additional virtual text files, rename/delete/duplicate actions, recent files, unsaved markers, autosave and a navigation warning if persistence fails.
 - **Portable project backups** in JSON format. Import validates the entire workspace before replacing the current one; older three-file project backups remain supported.
-- **Recovery safeguards** that preserve malformed stored workspace data when possible, expose a recovery export, and avoid overwriting the only copy when preservation fails.
+- **Recovery safeguards** that preserve malformed stored workspace data when possible, expose a recovery export, avoid overwriting the only copy when preservation fails, and let you create or restore up to 20 named snapshots per project.
 - **Workspace search and replace** with previous/next navigation, case sensitivity, whole-word matching and a confirmation step before bulk replacement.
 - **Useful editor controls** including indentation, word wrap, font size, Go to Line, a command palette and four workspace layouts.
 - **Runtime console** with timestamps, error/warning counts, an errors-only filter and console history.
@@ -61,6 +62,7 @@ The end-to-end test starts its own temporary local static server and uses an iso
 3. Use Explorer to open existing files or create additional browser-local text files.
 4. Use **Backup JSON** to export every workspace file. Import is validated before it can replace your open workspace.
 5. Use **Download HTML** to export a standalone document made from the three preview entry files.
+6. Use **Projects** to create, rename or delete isolated local projects; use **Snapshot** or the command palette to save a recovery point and restore it later.
 
 Additional virtual text files are included in workspace backups, but they are not automatically merged into the live preview. The preview is built from `index.html`, `styles.css` and `app.js`.
 
