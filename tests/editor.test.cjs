@@ -179,7 +179,7 @@ test("programmatic file switches do not mark files as edited", () => {
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   assert.match(app, /var switchingFile = false/);
   assert.match(app, /if\(update\.docChanged&&!switchingFile\)emit\("input"\)/);
-  assert.match(app, /switchingFile=true;editorView\.dispatch/);
+  assert.match(app, /switchingFile=true;\s*if\(!editorStates\[name\]\)editorStates\[name\]=makeEditorState\(name\);\s*editorView\.setState\(editorStates\[name\]\)/);
 });
 
 test("indentation setting updates CodeMirror's actual indent unit", () => {
