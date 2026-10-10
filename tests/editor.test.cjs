@@ -80,7 +80,8 @@ test("every static application element reference exists in the HTML", () => {
   const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
   const referencedIds = [...app.matchAll(/getElementById\("([^"]+)"\)/g)].map(match => match[1]);
-  const missing = [...new Set(referencedIds.filter(id => !ids.has(id)))];
+  const dynamicallyCreatedIds = new Set(["diffOverlay", "panel-tab-problems"]);
+  const missing = [...new Set(referencedIds.filter(id => !ids.has(id) && !dynamicallyCreatedIds.has(id)))];
   assert.deepEqual(missing, [], "Application references missing DOM elements");
 });
 
