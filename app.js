@@ -301,7 +301,10 @@
       var time=document.createElement("span");time.className="console-time";time.textContent=entry.time;
       var tag=document.createElement("span");tag.className="console-level";tag.textContent=entry.level;
       var msg=document.createElement("span");msg.className="console-message";msg.textContent=entry.message;
-      row.append(time,tag,msg);consoleOutput.appendChild(row);
+      row.append(time,tag,msg);
+      var location=entry.level==="error"&&entry.message.match(/\\bapp\\.js:(\\d+):(\\d+)\\b/);
+      if(location){var jump=document.createElement("button");jump.type="button";jump.className="console-jump";jump.textContent="Open source";jump.setAttribute("aria-label","Open app.js line "+location[1]);jump.addEventListener("click",function(){jumpToSource("app.js",Number(location[1]),Number(location[2]));});row.append(jump);}
+      consoleOutput.appendChild(row);
     });
     consoleLines=consoleHistory.length;
     consoleErrors=consoleHistory.filter(function(entry){return entry.level==="error";}).length;
@@ -616,14 +619,94 @@
     };
     reader.onerror=function(){say("Could not read that file.");};reader.readAsText(file);
   }
+
+  function jumpToSource(name,lineNumber,columnNumber) {
+    if(files[name]==null){say("That source file is no longer available.");return;}
+    openFile(name);
+    var total=editorView.state.doc.lines,line=editorView.state.doc.line(Math.max(1,Math.min(total,Number(lineNumber)||1)));
+    var position=Math.min(line.to,line.from+Math.max(0,(Number(columnNumber)||1)-1));
+    editorView.dispatch({selection:{anchor:position}});
+    editor.focus();
+  }
+  function collectDiagnostics() {
+    rememberEditor();
+    var diagnostics=[],seen=Object.create(null);
+    function add(name,source,offset,message) {
+      if(diagnostics.length>=200)return;
+      offset=Math.max(0,Math.min(source.length,offset||0));
+      var prefix=source.slice(0,offset),line=prefix.split("\\n").length,column=prefix.length-prefix.lastIndexOf("\\n");
+      var key=name+":"+line+":"+column+":"+message;if(seen[key])return;seen[key]=true;
+      diagnostics.push({file:name,line:line,column:column,from:offset,message:message});
+    }
+    var targets=[
+      {name:"index.html",language:Engine.htmlLanguage},
+      {name:"styles.css",language:Engine.cssLanguage},
+      {name:"app.js",language:Engine.javascriptLanguage}
+    ];
+    targets.forEach(function(target){
+      var source=files[target.name]||"";
+      try {
+        var tree=target.language.parser.parse(source);
+        tree.iterate({enter:function(node){if(node.type.isError)add(target.name,source,node.from,"Unexpected or incomplete syntax");}});
+      } catch(error) { add(target.name,source,0,"Could not parse this file"); }
+      if(target.name==="index.html") {
+        var markup=source.replace(/<!--[\\s\\S]*?-->/g,"").replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script\\s*>/gi,"").replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style\\s*>/gi,"");
+        var voidTags={area:1,base:1,br:1,col:1,embed:1,hr:1,img:1,input:1,link:1,meta:1,param:1,source:1,track:1,wbr:1};
+        var stack=[],pattern=/<\\/?([A-Za-z][A-Za-z0-9:-]*)\\b[^>]*>/g,match;
+        while((match=pattern.exec(markup))!==null) {
+          var token=match[0],tag=match[1].toLowerCase();
+          if(token.charAt(1)==="/") {
+            var found=-1;for(var si=stack.length-1;si>=0;si--)if(stack[si].tag===tag){found=si;break;}
+            if(found<0)add(target.name,source,match.index,"Unexpected closing tag </"+tag+">");
+            else stack.splice(found);
+          } else if(!voidTags[tag]&&!/\\/\\s*>$/.test(token))stack.push({tag:tag,from:match.index});
+        }
+        stack.slice(-10).forEach(function(open){add(target.name,source,open.from,"Missing closing tag </"+open.tag+">");});
+      }
+    });
+    return diagnostics;
+  }
+  function renderProblems() {
+    consoleOutput.replaceChildren();
+    var diagnostics=collectDiagnostics();
+    if(!diagnostics.length){var empty=document.createElement("div");empty.className="console-empty";empty.textContent="No syntax issues found in HTML, CSS or JavaScript. These parser checks are not a full type checker or linter.";consoleOutput.append(empty);return;}
+    diagnostics.forEach(function(item){
+      var row=document.createElement("div");row.className="problem-line";
+      var severity=document.createElement("span");severity.className="problem-severity";severity.textContent="ERROR";
+      var message=document.createElement("span");message.className="problem-message";message.textContent=item.file+":"+item.line+":"+item.column+" — "+item.message;
+      var jump=document.createElement("button");jump.type="button";jump.className="console-jump";jump.textContent="Open";jump.setAttribute("aria-label","Open "+item.file+" line "+item.line);
+      jump.addEventListener("click",function(){jumpToSource(item.file,item.line,item.column);});
+      row.append(severity,message,jump);consoleOutput.append(row);
+    });
+  }
+  function showLocalDiff() {
+    rememberEditor();
+    var snapshots=readSnapshots();
+    if(!snapshots.length){say("Create a snapshot before comparing local changes.");return;}
+    var base=snapshots[0].files&&snapshots[0].files[activeFile]||"",current=editor.value,diff;
+    try { diff=Core.diffLines(base,current); } catch(error) { say(error.message||"Could not compare this file.");return; }
+    if(!diff.some(function(line){return line.type!=="context";})){say("No changes from the latest snapshot for "+activeFile+".");return;}
+    var old=document.getElementById("diffOverlay");if(old)old.remove();
+    var overlay=document.createElement("div");overlay.id="diffOverlay";overlay.className="diff-overlay";
+    var dialog=document.createElement("section");dialog.className="diff-dialog";dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");dialog.setAttribute("aria-labelledby","diffTitle");
+    var heading=document.createElement("header");heading.className="diff-heading";
+    var title=document.createElement("h2");title.id="diffTitle";title.textContent="Local diff · "+activeFile;
+    var close=document.createElement("button");close.type="button";close.className="button button-quiet";close.textContent="Close";close.setAttribute("aria-label","Close local diff");close.addEventListener("click",function(){overlay.remove();});
+    heading.append(title,close);
+    var body=document.createElement("div");body.className="diff-body";body.setAttribute("aria-label","Line-by-line changes");
+    diff.forEach(function(item){var row=document.createElement("div");row.className="diff-line diff-"+item.type;var marker=item.type==="add"?"+":item.type==="remove"?"−":" ";var number=item.type==="remove"?item.oldLine:item.newLine||item.oldLine;row.textContent=marker+" "+String(number||"").padStart(4," ")+" "+item.text;body.append(row);});
+    dialog.append(heading,body);overlay.append(dialog);document.body.append(overlay);
+    overlay.addEventListener("click",function(event){if(event.target===overlay)overlay.remove();});
+    overlay.addEventListener("keydown",function(event){if(event.key==="Escape")overlay.remove();});
+    close.focus();
+  }
   function renderBottomPanel() {
     if(panelMode==="output") {
       consoleOutput.replaceChildren();
       if(!outputEntries.length){var empty=document.createElement("div");empty.className="console-empty";empty.textContent="Build and workspace activity will appear here.";consoleOutput.append(empty);return;}
       outputEntries.slice().reverse().forEach(function(entry){var row=document.createElement("div");row.className="console-line";var tag=document.createElement("span");tag.className="console-level";tag.textContent=entry.kind;var msg=document.createElement("span");msg.className="console-message";msg.textContent=entry.time+"  "+entry.message;row.append(tag,msg);consoleOutput.append(row);});
-    } else if(panelMode==="problems") {
-      consoleOutput.replaceChildren();var note=document.createElement("div");note.className="console-empty";note.textContent="No language-server diagnostics are configured. Runtime errors from the preview appear in Console.";consoleOutput.append(note);
-    } else renderConsoleHistory();
+    } else if(panelMode==="problems") renderProblems();
+    else renderConsoleHistory();
   }
 
   // Build the IDE shell around the existing editor/preview workspace.
@@ -701,6 +784,8 @@
       {name:"Manage local projects",hint:"New / rename / delete",run:manageProjects},
       {name:"Create workspace snapshot",hint:"Local recovery point",run:function(){createSnapshot(true);}},
       {name:"Restore workspace snapshot",hint:"Replace current files",run:restoreSnapshot},
+      {name:"Analyze HTML/CSS/JS",hint:"Problems panel",run:function(){document.getElementById("panel-tab-problems").click();}},
+      {name:"Compare active file with latest snapshot",hint:"Local diff",run:showLocalDiff},
       {name:"Open Explorer",hint:"Activity bar",run:function(){switchSideView("explorer");}},
       {name:"Open editor settings",hint:"Indentation and wrapping",run:function(){switchSideView("settings");}},
       {name:"Duplicate active file",hint:"Workspace",run:function(){duplicateFile(activeFile);}},
