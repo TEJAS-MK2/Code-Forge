@@ -108,6 +108,23 @@ async function main() {
     console.log("PASS: graphite-and-muted-lime theme tokens and core workspace regions render");
     console.log("PASS: built app and CodeMirror editor initialize");
 
+    // Simulate the browser's install prompt contract to verify the UI wiring
+    // without depending on browser-specific install eligibility heuristics.
+    await page.evaluate(() => {
+      window.__installPromptCalled = false;
+      const event = new Event("beforeinstallprompt", { cancelable: true });
+      event.prompt = async () => { window.__installPromptCalled = true; };
+      event.userChoice = Promise.resolve({ outcome: "accepted", platform: "web" });
+      window.dispatchEvent(event);
+    });
+    const installButton = page.getByRole("button", { name: "Install app" });
+    await installButton.waitFor({ state: "visible", timeout: 3000 });
+    await installButton.click();
+    assert.equal(await page.evaluate(() => window.__installPromptCalled), true);
+    await page.waitForFunction(() => document.querySelector("#installApp")?.hidden === true);
+    assert.equal(await page.locator("#toast").textContent(), "Code Forge installed.");
+    console.log("PASS: browser install prompt reveals and invokes the install action");
+
     // A separate context verifies offline caching without contaminating the main
     // interaction suite's network diagnostics or local workspace.
     const offlineContext = await browser.newContext({ viewport: { width: 1024, height: 768 } });
