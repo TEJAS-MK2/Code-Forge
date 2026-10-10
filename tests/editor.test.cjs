@@ -126,7 +126,14 @@ test("production build copies static app assets and bundles editor locally", () 
   const workflow = fs.readFileSync(path.join(root, ".github/workflows/pages.yml"), "utf8");
   assert.match(build, /outfile: path\.join\(dist, "editor\.bundle\.js"\)/);
   assert.match(build, /"index\.html", "styles\.css", "core\.js", "app\.js"/);
-  assert.match(workflow, /npm install/);
+  assert.match(workflow, /npm ci --no-fund/);
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+  const lockfile = JSON.parse(fs.readFileSync(path.join(root, "package-lock.json"), "utf8"));
+  assert.equal(lockfile.name, manifest.name);
+  assert.equal(lockfile.version, manifest.version);
+  assert.equal(lockfile.lockfileVersion, 3);
+  assert.deepEqual(lockfile.packages[""].dependencies, manifest.dependencies);
+  assert.deepEqual(lockfile.packages[""].devDependencies, manifest.devDependencies);
   assert.match(workflow, /path: dist/);
 });
 
