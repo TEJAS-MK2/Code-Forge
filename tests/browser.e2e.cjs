@@ -432,6 +432,25 @@ async function main() {
     assert.ok(localSnapshots[0].files["e2e-renamed.md"] !== undefined, "Snapshot should include virtual files");
     console.log("PASS: named local projects switch independently and workspace snapshots persist locally");
 
+    // Snapshot quota failure must never claim a snapshot was saved.
+    const originalSnapshotSetItem = await page.evaluate(() => {
+      const storage = Storage.prototype;
+      const original = storage.setItem;
+      storage.setItem = function (key, value) {
+        if (key === "code-forge-snapshots-v1:default") {
+          const error = new DOMException("Quota exceeded", "QuotaExceededError");
+          throw error;
+        }
+        return original.call(this, key, value);
+      };
+      return true;
+    });
+    assert.equal(originalSnapshotSetItem, true);
+    await page.getByRole("button", { name: "Snapshot" }).click();
+    await page.getByText(/Snapshot could not be saved/).waitFor({ state: "visible", timeout: 3000 });
+    await page.evaluate(() => { Storage.prototype.setItem = Storage.prototype.__unusedOriginal || Storage.prototype.setItem; });
+
+
     // The Problems panel reports parser errors and opens the relevant source line.
     await page.getByRole("tab", { name: "styles.css" }).click();
     const diagnosticEditor = page.locator('#editorHost .cm-content[contenteditable="true"]');
