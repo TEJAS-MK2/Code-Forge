@@ -249,7 +249,9 @@
     catch(error) { result={saved:false,error:error}; }
     if(result.saved){saveState("Saved on this device",true);return true;}
     saveState("Storage unavailable",false);
-    if(showError)say("Browser storage is unavailable. Export a backup to keep your work.");
+    if(result.error&&/quota|exceed|storage full/i.test(String(result.error.name||"")+" "+String(result.error.message||""))){
+      say("Browser storage quota reached. Export JSON or ZIP to keep your work before continuing.");
+    } else if(showError)say("Browser storage is unavailable. Export a backup to keep your work.");
     return false;
   }
   function persistSnapshot(showError) {
@@ -259,7 +261,9 @@
     catch(error) { result={saved:false,error:error}; }
     if(result.saved){saveState("Saved on this device",true);return true;}
     saveState("Storage unavailable",false);
-    if(showError)say("Browser storage is full or unavailable. Export a backup before continuing.");
+    if(result.error&&/quota|exceed|storage full/i.test(String(result.error.name||"")+" "+String(result.error.message||""))){
+      say("Browser storage quota reached. Export JSON or ZIP to keep your work before continuing.");
+    } else if(showError)say("Browser storage is full or unavailable. Export a backup before continuing.");
     return false;
   }
   function updateCursor() {
@@ -582,6 +586,11 @@
     download("code-forge-workspace.json",JSON.stringify({format:"code-forge-workspace",version:2,files:files},null,2),"application/json;charset=utf-8");
     say("Workspace backup downloaded");
   }
+  function exportZip() {
+    rememberEditor();
+    try { var archive=Core.zipWorkspace(files);download("code-forge-project.zip",archive,"application/zip");say("ZIP workspace exported with all virtual files."); }
+    catch(error) { say(error.message||"Could not create the ZIP backup."); }
+  }
   function exportRecoveryBackup() {
     if(!recoveryBackupRaw){say("No recovery copy is available.");return;}
     download("code-forge-recovery-copy.json",recoveryBackupRaw,"application/json;charset=utf-8");
@@ -761,6 +770,7 @@
   });
   document.getElementById("exportHtml").addEventListener("click",function(){rememberEditor();persist(false);download("code-forge-project.html",Core.buildDocument(files["index.html"],files["styles.css"],files["app.js"],""),"text/html;charset=utf-8");say("Standalone HTML downloaded");});
   document.getElementById("exportProject").addEventListener("click",exportWorkspace);
+  document.getElementById("exportZip").addEventListener("click",exportZip);
   document.getElementById("importButton").addEventListener("click",function(){document.getElementById("importFile").click();});
   document.getElementById("importFile").addEventListener("change",function(event){importWorkspace(event.target.files&&event.target.files[0]);event.target.value="";});
   document.getElementById("openPreview").addEventListener("click",function(){
