@@ -555,3 +555,15 @@ test("named projects and snapshots remain browser-local and are accessible from 
   assert.match(core, /function projectIndexJSON\(index\)/);
   assert.match(app, /code-forge-snapshots-v1:/);
 });
+
+ 
+test("ZIP export and storage quota warnings are wired to visible recovery actions", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const core = fs.readFileSync(path.join(root, "core.js"), "utf8");
+  assert.match(html, /id="exportZip"/);
+  assert.match(app, /function exportZip\(\)/);
+  assert.match(app, /Core\.zipWorkspace\(files\)/);
+  assert.match(app, /Browser storage quota reached/);
+  assert.match(core, /function zipWorkspace\(files\)/);
+});
