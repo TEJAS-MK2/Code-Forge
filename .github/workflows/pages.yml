@@ -112,3 +112,29 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      - name: Smoke-test the published page and required assets
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          PAGE_URL="${PAGE_URL%/}/"
+          page_file="$(mktemp)"
+          trap 'rm -f "$page_file"' EXIT
+
+          # GitHub Pages can take a short time to serve a newly published artifact.
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error --location "$PAGE_URL" --output "$page_file"; then
+              break
+            fi
+            if [ "$attempt" -eq 12 ]; then
+              echo "Published page did not become available after 12 attempts."
+              exit 1
+            fi
+            sleep 5
+          done
+
+          grep -Fq '<title>Code Forge — Browser Editor</title>' "$page_file"
+          for asset in styles.css core.js app.js editor.bundle.js; do
+            echo "Checking ${PAGE_URL}${asset}"
+            curl --fail --silent --show-error --location --output /dev/null "${PAGE_URL}${asset}"
+          done
