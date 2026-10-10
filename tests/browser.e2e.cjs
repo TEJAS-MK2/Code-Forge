@@ -262,6 +262,48 @@ async function main() {
     assert.equal(await page.evaluate(() => localStorage.getItem("code-forge-workspace-v2")), workspaceBeforeOversizeImport);
     console.log("PASS: oversized workspace imports are rejected without changing local data");
 
+    // A syntactically invalid import must not replace or mutate the current workspace.
+    const workspaceBeforeInvalidImport = await page.evaluate(() => localStorage.getItem("code-forge-workspace-v2"));
+    const invalidImportDialog = page.waitForEvent("dialog").then(dialog => dialog.accept());
+    await page.locator("#importFile").setInputFiles({
+      name: "invalid-workspace.json",
+      mimeType: "application/json",
+      buffer: Buffer.from('{"format":"code-forge-workspace","version":2,"files":{"index.html":')
+    });
+    await invalidImportDialog;
+    await page.waitForFunction(() => document.querySelector("#toast")?.textContent.length > 0, null, { timeout: 5000 });
+    assert.equal(await page.evaluate(() => localStorage.getItem("code-forge-workspace-v2")), workspaceBeforeInvalidImport);
+    console.log("PASS: malformed workspace imports leave the current local workspace untouched");
+
+    // Simulate a quota failure in real browser storage, not just the isolated unit-test adapter.
+    await page.evaluate(() => {
+      window.__codeForgeNativeSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key, value) {
+        if (key === "code-forge-workspace-v2") {
+          throw new DOMException("Simulated quota exceeded", "QuotaExceededError");
+        }
+        return window.__codeForgeNativeSetItem.call(this, key, value);
+      };
+    });
+    const storageFailureEditor = page.locator('#editorHost .cm-content[contenteditable="true"]');
+    await storageFailureEditor.click();
+    await page.keyboard.press("Control+A");
+    await page.keyboard.insertText("storage failure unsaved content");
+    await page.waitForFunction(() => document.querySelector("#saveState")?.textContent === "Storage unavailable", null, { timeout: 7000 });
+    await page.locator("#fileTabs .file-tab-dirty").waitFor({ state: "visible", timeout: 3000 });
+    const [unsavedDownload] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByRole("button", { name: "Backup JSON" }).click()
+    ]);
+    const unsavedBackupPath = await unsavedDownload.path();
+    const unsavedBackup = JSON.parse(fs.readFileSync(unsavedBackupPath, "utf8"));
+    assert.equal(unsavedBackup.files["e2e-renamed.md"], "storage failure unsaved content");
+    await page.evaluate(() => {
+      if (window.__codeForgeNativeSetItem) Storage.prototype.setItem = window.__codeForgeNativeSetItem;
+      delete window.__codeForgeNativeSetItem;
+    });
+    console.log("PASS: storage quota failures keep edits marked unsaved and allow a complete backup export");
+
     await page.getByRole("button", { name: "Stack" }).click();
     assert.equal(await page.getByRole("button", { name: "Stack" }).getAttribute("aria-pressed"), "true");
     await page.getByRole("button", { name: "Split" }).click();
