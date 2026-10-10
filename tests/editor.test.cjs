@@ -537,3 +537,21 @@ test("navigation warns when local persistence fails and unsaved work remains", (
   assert.match(app, /window\.addEventListener\("beforeunload",function\(event\)/);
   assert.match(app, /event\.preventDefault\(\);event\.returnValue=""/);
 });
+
+ 
+test("named projects and snapshots remain browser-local and are accessible from the workspace", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const core = fs.readFileSync(path.join(root, "core.js"), "utf8");
+  assert.match(html, /id="projectSelect"/);
+  assert.match(html, /id="manageProjects"/);
+  assert.match(html, /id="createSnapshot"/);
+  assert.match(app, /code-forge-projects-v1/);
+  assert.match(app, /code-forge-project-data-v1:/);
+  assert.match(app, /function switchProject\(nextId\)/);
+  assert.match(app, /function createSnapshot\(announce\)/);
+  assert.match(app, /function restoreSnapshot\(\)/);
+  assert.match(core, /function readProjectIndex\(value\)/);
+  assert.match(core, /function projectIndexJSON\(index\)/);
+  assert.match(app, /code-forge-snapshots-v1:/);
+});

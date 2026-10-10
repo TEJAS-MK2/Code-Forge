@@ -8,6 +8,35 @@
     "styles.css": '* { box-sizing: border-box; }\nbody {\n  margin: 0;\n  min-height: 100vh;\n  display: grid;\n  place-items: center;\n  padding: 24px;\n  background: #f2f0e9;\n  color: #20241e;\n  font-family: system-ui, sans-serif;\n}\n.card { max-width: 560px; }\n.eyebrow { color: #526b3e; letter-spacing: .14em; font-size: 12px; font-weight: 700; }\nh1 { font-size: clamp(2.5rem, 8vw, 4.5rem); line-height: 1.02; letter-spacing: -.06em; }\nh1 span { color: #55763b; }\np { color: #62685d; line-height: 1.7; }\nbutton { padding: 11px 16px; border: 0; border-radius: 6px; background: #b8e986; color: #182012; font-weight: 700; cursor: pointer; }',
     "app.js": "document.querySelector('#hello')?.addEventListener('click', () => {\n  document.querySelector('#message').textContent = 'Your JavaScript is running.';\n  console.log('Button clicked');\n});"
   };
+  var PROJECT_INDEX_KEY="code-forge-projects-v1";
+  var PROJECT_DATA_PREFIX="code-forge-project-data-v1:";
+  var SNAPSHOT_PREFIX="code-forge-snapshots-v1:";
+  function readProjectRegistry() {
+    try {
+      var raw=localStorage.getItem(PROJECT_INDEX_KEY);
+      if(raw)return Core.readProjectIndex(raw);
+    } catch(error) {
+      try { var invalid=localStorage.getItem(PROJECT_INDEX_KEY);if(invalid)localStorage.setItem("code-forge-project-index-recovery-v1",invalid); } catch(e) {}
+    }
+    var initial={format:"code-forge-project-index",version:1,activeId:"default",projects:[{id:"default",name:"My Project"}]};
+    try { localStorage.setItem(PROJECT_INDEX_KEY,Core.projectIndexJSON(initial)); } catch(e) {}
+    return initial;
+  }
+  var projectRegistry=readProjectRegistry();
+  var activeProjectId=projectRegistry.activeId;
+  try { if(!localStorage.getItem("code-forge-workspace-v2")){var activeStored=localStorage.getItem(PROJECT_DATA_PREFIX+activeProjectId);if(activeStored)localStorage.setItem("code-forge-workspace-v2",activeStored);} } catch(e) {}
+  function saveProjectRegistry() {
+    try { localStorage.setItem(PROJECT_INDEX_KEY,Core.projectIndexJSON(projectRegistry));return true; }
+    catch(error) { say("Project list could not be saved. Browser storage may be full.");return false; }
+  }
+  function projectDataKey(id) { return PROJECT_DATA_PREFIX+id; }
+  function snapshotKey() { return SNAPSHOT_PREFIX+activeProjectId; }
+  function renderProjectSelector() {
+    var select=document.getElementById("projectSelect");if(!select)return;
+    select.replaceChildren();
+    projectRegistry.projects.forEach(function(project){var option=document.createElement("option");option.value=project.id;option.textContent=project.name;select.append(option);});
+    select.value=activeProjectId;
+  }
   var recoveryBackupRaw=null,recoveryBackupPreserved=false;
   try { recoveryBackupRaw=localStorage.getItem("code-forge-recovery-backup-v1");recoveryBackupPreserved=!!recoveryBackupRaw; } catch(e) {}
   var files = loadFiles();
@@ -74,6 +103,116 @@
       if (Core.validProject(old)) return {"index.html":old.html,"styles.css":old.css,"app.js":old.js};
     } catch (e) {}
     return Object.assign({}, START);
+  }
+  function resetEditorForWorkspace() {
+    editorStates=Object.create(null);activeFile="index.html";openFiles=["index.html","styles.css","app.js"];
+    switchingFile=true;editorView.setState(makeEditorState(activeFile));editorStates[activeFile]=editorView.state;switchingFile=false;
+    dirty=Object.create(null);renderTabs();renderExplorer();updateCursor();renderPreview(false);
+  }
+  function switchProject(nextId) {
+    if(!projectRegistry.projects.some(function(project){return project.id===nextId;})){say("That project is no longer available.");renderProjectSelector();return false;}
+    if(nextId===activeProjectId)return true;
+    rememberEditor();
+    if(!persist(true)){renderProjectSelector();say("Project switch stopped because the current workspace could not be saved. Export a backup first.");return false;}
+    var previousId=activeProjectId,previousRaw;
+    try {
+      previousRaw=localStorage.getItem("code-forge-workspace-v2");
+      if(previousRaw)localStorage.setItem(projectDataKey(previousId),previousRaw);
+      var targetRaw=localStorage.getItem(projectDataKey(nextId));
+      var nextFiles=targetRaw?Core.readWorkspace(targetRaw):Object.assign({},START);
+      var nextRaw=JSON.stringify({format:"code-forge-workspace",version:2,files:nextFiles});
+      localStorage.setItem("code-forge-workspace-v2",nextRaw);
+      projectRegistry.activeId=nextId;
+      if(!saveProjectRegistry())throw new Error("The active project could not be saved.");
+      activeProjectId=nextId;files=nextFiles;
+      if(!targetRaw)localStorage.setItem(projectDataKey(nextId),nextRaw);
+      resetEditorForWorkspace();renderProjectSelector();
+      say("Opened "+projectRegistry.projects.find(function(project){return project.id===nextId;}).name+".");
+      return true;
+    } catch(error) {
+      try { if(previousRaw)localStorage.setItem("code-forge-workspace-v2",previousRaw); } catch(e) {}
+      projectRegistry.activeId=previousId;saveProjectRegistry();activeProjectId=previousId;renderProjectSelector();
+      say("Project switch failed without intentionally replacing your current files. Export a backup if storage is full.");
+      return false;
+    }
+  }
+  function manageProjects() {
+    var action=prompt("Projects: type new, rename or delete","new");
+    if(!action)return;action=action.trim().toLowerCase();
+    var current=projectRegistry.projects.find(function(project){return project.id===activeProjectId;});
+    if(action==="new") {
+      if(projectRegistry.projects.length>=50){say("A maximum of 50 local projects is supported.");return;}
+      var name=prompt("Name the new project (1–48 characters):","Untitled Project");if(!name)return;name=name.trim();
+      if(!name||name.length>48||/[\u0000-\u001f\u007f]/.test(name)){say("Project names must contain 1–48 printable characters.");return;}
+      if(projectRegistry.projects.some(function(project){return project.name.toLowerCase()===name.toLowerCase();})){say("A project with that name already exists.");return;}
+      var id="p-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);
+      var raw=JSON.stringify({format:"code-forge-workspace",version:2,files:Object.assign({},START)});
+      try { localStorage.setItem(projectDataKey(id),raw); }
+      catch(error){say("Could not create the project because browser storage is unavailable or full.");return;}
+      projectRegistry.projects.push({id:id,name:name});
+      if(!saveProjectRegistry()){projectRegistry.projects=projectRegistry.projects.filter(function(project){return project.id!==id;});try{localStorage.removeItem(projectDataKey(id));}catch(e){}return;}
+      switchProject(id);return;
+    }
+    if(action==="rename") {
+      var renamed=prompt("Rename project:",current.name);if(!renamed)return;renamed=renamed.trim();
+      if(!renamed||renamed.length>48||/[\u0000-\u001f\u007f]/.test(renamed)){say("Project names must contain 1–48 printable characters.");return;}
+      if(projectRegistry.projects.some(function(project){return project.id!==activeProjectId&&project.name.toLowerCase()===renamed.toLowerCase();})){say("A project with that name already exists.");return;}
+      var previousName=current.name;current.name=renamed;
+      if(saveProjectRegistry()){renderProjectSelector();say("Project renamed.");}else current.name=previousName;
+      return;
+    }
+    if(action==="delete") {
+      if(projectRegistry.projects.length===1){say("Keep at least one local project.");return;}
+      if(!confirm("Delete project '"+current.name+"' and its local files? This cannot be undone."))return;
+      var next=projectRegistry.projects.find(function(project){return project.id!==activeProjectId;});
+      var oldId=activeProjectId;
+      if(!switchProject(next.id))return;
+      var previousProjects=projectRegistry.projects;
+      projectRegistry.projects=projectRegistry.projects.filter(function(project){return project.id!==oldId;});
+      if(saveProjectRegistry()){
+        try { localStorage.removeItem(projectDataKey(oldId));localStorage.removeItem(snapshotKeyFor(oldId)); } catch(e) {}
+        renderProjectSelector();say("Project deleted from this browser.");
+      } else projectRegistry.projects=previousProjects;
+    }
+  }
+  function snapshotKeyFor(id) { return SNAPSHOT_PREFIX+id; }
+  function readSnapshots() {
+    try {
+      var parsed=JSON.parse(localStorage.getItem(snapshotKey())||"[]");
+      if(!Array.isArray(parsed))return [];
+      return parsed.filter(function(snapshot){
+        try { return snapshot&&typeof snapshot.label==="string"&&Number.isFinite(snapshot.createdAt)&&Core.readWorkspace({format:"code-forge-workspace",version:2,files:snapshot.files}); }
+        catch(e){return false;}
+      }).slice(0,20);
+    } catch(e) { return []; }
+  }
+  function createSnapshot(announce) {
+    rememberEditor();
+    var snapshots=readSnapshots();
+    snapshots.unshift({id:"s-"+Date.now().toString(36),label:"Workspace snapshot",createdAt:Date.now(),files:JSON.parse(JSON.stringify(files))});
+    snapshots=snapshots.slice(0,20);
+    try { localStorage.setItem(snapshotKey(),JSON.stringify(snapshots));if(announce!==false)say("Snapshot saved in this browser.");return true; }
+    catch(error) {
+      try { snapshots.pop();localStorage.setItem(snapshotKey(),JSON.stringify(snapshots));say("Storage was tight; the oldest snapshot was removed to keep the latest snapshot.");return true; }
+      catch(e){say("Snapshot could not be saved. Browser storage may be full; export a backup.");return false;}
+    }
+  }
+  function restoreSnapshot() {
+    var snapshots=readSnapshots();
+    if(!snapshots.length){say("No snapshots are available for this project.");return;}
+    var choices=snapshots.map(function(snapshot,index){return (index+1)+". "+snapshot.label+" — "+new Date(snapshot.createdAt).toLocaleString();}).join("\n");
+    var choice=prompt("Choose a snapshot to restore:\n"+choices,"1");
+    if(!choice)return;var index=Number(choice)-1;
+    if(!Number.isInteger(index)||index<0||index>=snapshots.length){say("Choose a valid snapshot number.");return;}
+    if(!confirm("Restore this snapshot? Current workspace files will be replaced."))return;
+    try {
+      var restored=Core.readWorkspace({format:"code-forge-workspace",version:2,files:snapshots[index].files});
+      var raw=JSON.stringify({format:"code-forge-workspace",version:2,files:restored});
+      localStorage.setItem("code-forge-workspace-v2",raw);
+      files=restored;resetEditorForWorkspace();
+      if(!persist(true)){Object.keys(files).forEach(function(name){dirty[name]=true;});renderTabs();renderExplorer();return;}
+      say("Snapshot restored.");
+    } catch(error) { say("Snapshot restore failed. Current files were not intentionally changed."); }
   }
   function safeName(name) {
     return typeof name === "string" && name.length > 0 && name.length <= 64 &&
@@ -494,6 +633,10 @@
   editorStates[activeFile]=editorView.state;
   editor.setAttribute("aria-label","Code editor content");
   editorHost.addEventListener("keydown",function(event){emit("keydown",event);});
+  renderProjectSelector();
+  document.getElementById("projectSelect").addEventListener("change",function(event){switchProject(event.target.value);});
+  document.getElementById("manageProjects").addEventListener("click",manageProjects);
+  document.getElementById("createSnapshot").addEventListener("click",function(){createSnapshot(true);});
   setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);if(recoveryBackupRaw)say(recoveryBackupPreserved?"A raw recovery copy was preserved locally. Use the command palette to export it.":"The invalid workspace backup could not be preserved locally. Export the raw recovery copy immediately.");
   document.querySelectorAll(".layout-button").forEach(function(b){b.addEventListener("click",function(){setLayout(b.dataset.layout);});});
   editor.addEventListener("input",function(){
@@ -546,6 +689,9 @@
       {name:"Create new file",hint:"Ctrl + N",run:newFile},
       {name:"Search in files",hint:"Explorer search",run:function(){switchSideView("search");}},
       {name:"Export workspace backup",hint:"JSON",run:exportWorkspace},
+      {name:"Manage local projects",hint:"New / rename / delete",run:manageProjects},
+      {name:"Create workspace snapshot",hint:"Local recovery point",run:function(){createSnapshot(true);}},
+      {name:"Restore workspace snapshot",hint:"Replace current files",run:restoreSnapshot},
       {name:"Open Explorer",hint:"Activity bar",run:function(){switchSideView("explorer");}},
       {name:"Open editor settings",hint:"Indentation and wrapping",run:function(){switchSideView("settings");}},
       {name:"Duplicate active file",hint:"Workspace",run:function(){duplicateFile(activeFile);}},

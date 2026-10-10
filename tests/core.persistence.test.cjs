@@ -74,3 +74,19 @@ test("workspace reader accepts 500 files and rejects 501 files atomically", () =
     /too many files/i
   );
 });
+
+ 
+test("project index validation rejects duplicate names, unsafe IDs and unknown active projects", () => {
+  const valid = { format: "code-forge-project-index", version: 1, activeId: "default", projects: [{ id: "default", name: "My Project" }] };
+  assert.deepEqual(Core.readProjectIndex(valid), valid);
+  assert.throws(() => Core.readProjectIndex({ ...valid, projects: [{ id: "bad/id", name: "Project" }] }), /identifier/i);
+  assert.throws(() => Core.readProjectIndex({ ...valid, projects: [{ id: "one", name: "Same" }, { id: "two", name: "same" }] }), /unique/i);
+  assert.throws(() => Core.readProjectIndex({ ...valid, activeId: "missing" }), /active project/i);
+  assert.throws(() => Core.readProjectIndex({ ...valid, projects: [] }), /invalid or unsupported/i);
+});
+
+test("project index JSON is normalized and versioned", () => {
+  const json = Core.projectIndexJSON({ format: "code-forge-project-index", version: 1, activeId: "default", projects: [{ id: "default", name: "  Local Project  " }] });
+  assert.equal(JSON.parse(json).projects[0].name, "Local Project");
+  assert.equal(JSON.parse(json).version, 1);
+});

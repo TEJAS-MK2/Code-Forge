@@ -121,5 +121,26 @@
     return { "index.html": legacy.html, "styles.css": legacy.css, "app.js": legacy.js };
   }
 
-  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace, writeWorkspace: writeWorkspace };
+
+  function readProjectIndex(value) {
+    var parsed=typeof value==="string"?JSON.parse(value):value;
+    if(!parsed||parsed.format!=="code-forge-project-index"||parsed.version!==1||!Array.isArray(parsed.projects)||parsed.projects.length<1||parsed.projects.length>50) {
+      throw new Error("This project index is invalid or unsupported.");
+    }
+    var ids=Object.create(null),names=Object.create(null),projects=[];
+    parsed.projects.forEach(function(project){
+      if(!project||typeof project.id!=="string"||!/^[a-z0-9][a-z0-9-]{0,63}$/.test(project.id))throw new Error("Invalid project identifier.");
+      if(typeof project.name!=="string")throw new Error("Invalid project name.");
+      var name=project.name.trim();
+      if(!name||name.length>48||/[\u0000-\u001f\u007f]/.test(name))throw new Error("Project names must contain 1–48 printable characters.");
+      var normalized=name.toLowerCase();
+      if(ids[project.id]||names[normalized])throw new Error("Project identifiers and names must be unique.");
+      ids[project.id]=true;names[normalized]=true;projects.push({id:project.id,name:name});
+    });
+    if(typeof parsed.activeId!=="string"||!ids[parsed.activeId])throw new Error("The active project is missing from the project index.");
+    return {format:"code-forge-project-index",version:1,activeId:parsed.activeId,projects:projects};
+  }
+  function projectIndexJSON(index) { return JSON.stringify(readProjectIndex(index),null,2); }
+
+  return { buildDocument: buildDocument, validProject: validProject, projectJSON: projectJSON, readProject: readProject, readWorkspace: readWorkspace, writeWorkspace: writeWorkspace, readProjectIndex: readProjectIndex, projectIndexJSON: projectIndexJSON };
 });
