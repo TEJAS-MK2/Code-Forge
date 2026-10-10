@@ -1,0 +1,18 @@
+{
+  "name": "Code Forge — Browser Editor",
+  "short_name": "Code Forge",
+  "description": "A local-first HTML, CSS and JavaScript workspace.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111311",
+  "theme_color": "#111311",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

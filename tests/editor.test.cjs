@@ -482,3 +482,16 @@ test("startup recovery state is initialized before loading a potentially malform
   assert.match(app, /var item=document\.createElement\("div"\);item\.className="tree-file"/);
   assert.match(app, /var openButton=document\.createElement\("button"\);openButton\.type="button";openButton\.className="tree-file-open"/);
 });
+
+ 
+test("production build includes offline install metadata and service worker", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const build = fs.readFileSync(path.join(root, "scripts/build.cjs"), "utf8");
+  const worker = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+  assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
+  assert.match(html, /rel="icon" href="\.\/icon\.svg"/);
+  assert.match(app, /navigator\.serviceWorker\.register\("\.\/sw\.js"\)/);
+  for (const asset of ["sw.js", "manifest.webmanifest", "icon.svg"]) assert.ok(build.includes('"'+asset+'"'), asset);
+  for (const asset of ["index.html", "styles.css", "core.js", "app.js", "editor.bundle.js", "manifest.webmanifest", "icon.svg"]) assert.ok(worker.includes('"./'+asset+'"'), asset);
+});

@@ -18,6 +18,7 @@ No account, cloud authentication or application backend is required. Projects an
 - **Runtime console** with timestamps, error/warning counts, an errors-only filter and console history.
 - **Standalone HTML export** for sharing a self-contained version of the three preview entry files.
 - **Local static bundle**: CodeMirror is bundled for the published site; the app does not fetch editor packages from a runtime CDN.
+- **Installable offline shell**: after one successful visit, a service worker caches the editor assets so the app can reopen without a network connection. Projects remain in that browser profile; offline caching is not cloud sync or a substitute for exported backups.
 
 ## Getting started
 
@@ -37,7 +38,7 @@ Requirements: Node.js 22 or newer and npm.
    npm run build
    ```
 
-3. Serve the generated `dist/` directory over HTTP using your preferred static server. The site is designed to run as static files; no app server or database is needed.
+3. Serve the generated `dist/` directory over HTTP using your preferred static server. The site is designed to run as static files; no app server or database is needed. The offline service worker requires HTTPS or localhost, as enforced by browsers.
 
 To run the browser regression tests as well, install Playwright's Chromium browser once:
 
@@ -93,7 +94,7 @@ npm test
 npm run test:e2e
 ```
 
-The end-to-end suite exercises the built app in Chromium, including preview execution, editor changes, local autosave/reload, malformed and oversized import preservation, storage-quota failure with backup export, and narrow viewport overflow. GitHub Actions validates pushes and pull requests with syntax checks, a production build, regression tests and Chromium browser checks. Pull requests are never deployed; only a successful run on `main` can publish `dist/` to GitHub Pages. Workflow actions are SHA-pinned, deployment permissions are scoped to the deploy job, CI runs `npm audit --audit-level=high` and fails on high or critical dependency vulnerabilities, and Dependabot checks dependency updates weekly.
+The end-to-end suite exercises the built app in Chromium, including preview execution, editor changes, local autosave/reload, malformed and oversized import preservation, storage-quota failure with backup export, an offline reload after the app shell is cached, and narrow viewport overflow. GitHub Actions validates pushes and pull requests with syntax checks, a production build, regression tests and Chromium browser checks. Pull requests are never deployed; only a successful run on `main` can publish `dist/` to GitHub Pages. Workflow actions are SHA-pinned, deployment permissions are scoped to the deploy job, CI runs `npm audit --audit-level=high` and fails on high or critical dependency vulnerabilities, and Dependabot checks dependency updates weekly.
 
 - [Latest workflow runs](https://github.com/TEJAS-MK2/Code-Forge/actions)
 - [Open the live app](https://tejas-mk2.github.io/Code-Forge/)
@@ -105,7 +106,8 @@ The end-to-end suite exercises the built app in Chromium, including preview exec
 - `app.js` — editor interactions, workspace management, persistence, preview and console.
 - `core.js` — document generation and validated project/workspace formats.
 - `src/editor.js` — CodeMirror 6 setup, language support and editor theme.
-- `scripts/build.cjs` — produces the self-contained site in `dist/`.
+- `scripts/build.cjs` — produces the static site in `dist/`.
+- `manifest.webmanifest`, `icon.svg` and `sw.js` — install metadata, app icon and offline app-shell cache.
 - `tests/*.test.cjs` — Node.js unit/regression tests.
 - `tests/browser.e2e.cjs` — Chromium end-to-end smoke and responsive checks.
 - `.github/workflows/pages.yml` — CI validation and GitHub Pages deployment.

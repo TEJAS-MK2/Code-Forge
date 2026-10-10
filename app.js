@@ -617,3 +617,12 @@
   handle.addEventListener("pointerup",function(){resizing=false;});handle.addEventListener("pointercancel",function(){resizing=false;});
   handle.addEventListener("keydown",function(event){if(matchMedia("(max-width: 760px)").matches)return;if(event.key==="ArrowLeft"||event.key==="ArrowRight"){event.preventDefault();var rect=workspace.getBoundingClientRect();resizeAt(rect.left+rect.width*Math.max(.25,Math.min(.75,resizeRatio+(event.key==="ArrowLeft"?-.03:.03))));}});
 })();
+
+// Progressive enhancement: keep the static app shell available offline after first load.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js").catch(function () {
+      // The editor remains usable when service workers are unavailable.
+    });
+  });
+}
