@@ -200,8 +200,8 @@
   function restoreSnapshot() {
     var snapshots=readSnapshots();
     if(!snapshots.length){say("No snapshots are available for this project.");return;}
-    var choices=snapshots.map(function(snapshot,index){return (index+1)+". "+snapshot.label+" — "+new Date(snapshot.createdAt).toLocaleString();}).join("\\n");
-    var choice=prompt("Choose a snapshot to restore:\\n"+choices,"1");
+    var choices=snapshots.map(function(snapshot,index){return (index+1)+". "+snapshot.label+" — "+new Date(snapshot.createdAt).toLocaleString();}).join("\n");
+    var choice=prompt("Choose a snapshot to restore:\n"+choices,"1");
     if(!choice)return;var index=Number(choice)-1;
     if(!Number.isInteger(index)||index<0||index>=snapshots.length){say("Choose a valid snapshot number.");return;}
     if(!confirm("Restore this snapshot? Current workspace files will be replaced."))return;
