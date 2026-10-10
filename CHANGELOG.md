@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-10 — Studio polish
+
+- Restored the intended graphite-and-muted-lime design system and removed a conflicting blue-theme override.
+- Refined the editor, explorer, preview and console surfaces with consistent borders, restrained contrast and focus states.
+- Improved header spacing and responsive layout polish while respecting reduced-motion preferences.
+- Added Chromium checks for the design tokens and the visibility of the editor, preview and console.
+
+
 ## 2026-10-10
 
 - Added Chromium end-to-end coverage proving malformed workspace imports leave existing local data untouched.

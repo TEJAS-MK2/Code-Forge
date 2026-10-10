@@ -93,6 +93,19 @@ async function main() {
         JSON.stringify({ diagnostics, errors }) + ". Original wait error: " + error.message);
     }
     await page.locator("#editorHost .cm-content[contenteditable=\"true\"]").waitFor({ state: "visible" });
+    const theme = await page.evaluate(() => ({
+      accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),
+      canvas: getComputedStyle(document.documentElement).getPropertyValue("--canvas").trim(),
+      editorVisible: !!document.querySelector("#editorHost .cm-editor")?.getBoundingClientRect().height,
+      previewVisible: !!document.querySelector("#preview")?.getBoundingClientRect().height,
+      consoleVisible: !!document.querySelector("#consoleOutput")?.getBoundingClientRect().height
+    }));
+    assert.equal(theme.accent, "#b8e986", "The interface should retain its muted-lime accent.");
+    assert.equal(theme.canvas, "#111311", "The interface should retain its graphite canvas.");
+    assert.equal(theme.editorVisible, true);
+    assert.equal(theme.previewVisible, true);
+    assert.equal(theme.consoleVisible, true);
+    console.log("PASS: graphite-and-muted-lime theme tokens and core workspace regions render");
     console.log("PASS: built app and CodeMirror editor initialize");
 
     const preview = page.frameLocator("#preview");

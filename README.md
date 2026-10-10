@@ -1,6 +1,6 @@
 # Code Forge
 
-A local-first browser workspace for building small web projects with HTML, CSS and JavaScript. Code Forge combines a multi-file editor, live preview and runtime console in a restrained graphite-and-lime interface.
+A local-first browser workspace for building small web projects with HTML, CSS and JavaScript. Code Forge combines a multi-file editor, live preview and runtime console in a restrained graphite-and-muted-lime interface, tuned for clear hierarchy, long editing sessions and responsive use.
 
 **Live app:** https://tejas-mk2.github.io/Code-Forge/
 
