@@ -122,6 +122,7 @@ async function main() {
     await installButton.click();
     assert.equal(await page.evaluate(() => window.__installPromptCalled), true);
     await page.waitForFunction(() => document.querySelector("#installApp")?.hidden === true);
+    await page.waitForFunction(() => document.querySelector("#toast")?.textContent === "Code Forge installed.");
     assert.equal(await page.locator("#toast").textContent(), "Code Forge installed.");
     console.log("PASS: browser install prompt reveals and invokes the install action");
 
