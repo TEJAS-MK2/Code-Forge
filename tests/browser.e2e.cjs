@@ -108,6 +108,29 @@ async function main() {
     console.log("PASS: graphite-and-muted-lime theme tokens and core workspace regions render");
     console.log("PASS: built app and CodeMirror editor initialize");
 
+    // A separate context verifies offline caching without contaminating the main
+    // interaction suite's network diagnostics or local workspace.
+    const offlineContext = await browser.newContext({ viewport: { width: 1024, height: 768 } });
+    try {
+      const offlinePage = await offlineContext.newPage();
+      await offlinePage.goto(origin, { waitUntil: "load", timeout: 20000 });
+      const registration = await offlinePage.evaluate(async () => {
+        const ready = await navigator.serviceWorker.ready;
+        return { active: !!ready.active, scope: ready.scope };
+      });
+      assert.equal(registration.active, true, "The offline service worker should activate.");
+      await offlinePage.reload({ waitUntil: "load", timeout: 20000 });
+      await offlinePage.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 10000 });
+      await offlineContext.setOffline(true);
+      await offlinePage.reload({ waitUntil: "load", timeout: 20000 });
+      assert.equal(await offlinePage.title(), "Code Forge — Browser Editor");
+      await offlinePage.locator("#editorHost .cm-editor").waitFor({ state: "visible", timeout: 10000 });
+      assert.equal(await offlinePage.locator('#editorHost .cm-content[contenteditable="true"]').isVisible(), true);
+      console.log("PASS: cached app shell reloads with the network disabled");
+    } finally {
+      await offlineContext.close();
+    }
+
     const preview = page.frameLocator("#preview");
     await preview.locator("#hello").waitFor({ state: "visible", timeout: 10000 });
     await preview.getByRole("button", { name: "Try the button" }).click();
