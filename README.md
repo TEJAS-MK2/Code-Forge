@@ -26,6 +26,10 @@ No account, cloud authentication or application backend is required. Projects an
 
 Open the [live app](https://tejas-mk2.github.io/Code-Forge/). Work is stored in that browser profile on that device. Export a backup before clearing site data, changing browsers or moving to another device.
 
+### Install the app
+
+When your browser offers installation, Code Forge shows an **Install app** action. You can also use the browser menu's **Install app** or **Add to Home screen** option where supported. Visit the site once while online before expecting the app shell to reopen offline. Installation and offline caching do not move project data between devices.
+
 ### Run locally
 
 Requirements: Node.js 22 or newer and npm.
