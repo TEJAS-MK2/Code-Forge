@@ -28,6 +28,7 @@
   var indentCompartment = new Engine.Compartment();
   var switchingFile = false;
   var editorView;
+  var editorStates = Object.create(null);
   var layout = "split";
   var sideView = "explorer";
   var outputEntries = [];
@@ -205,14 +206,28 @@
       tab.addEventListener("click",function(){openFile(name);});fileTabs.appendChild(tab);
     });
   }
+  function makeEditorState(name) {
+    var wrap=true,indent="2";
+    try { wrap=localStorage.getItem("code-forge-word-wrap")!=="false";indent=localStorage.getItem("code-forge-indent")||"2"; } catch(e) {}
+    return Engine.EditorState.create({doc:files[name]||"",extensions:[
+      Engine.basicSetup,Engine.syntaxHighlighting(Engine.syntax),Engine.theme,
+      languageCompartment.of(languageExtension(name)),
+      wrappingCompartment.of(wrap?Engine.EditorView.lineWrapping:[]),
+      indentCompartment.of(Engine.indentUnit.of(indent==="tab"?"\t":" ".repeat(indent==="4"?4:2))),
+      Engine.EditorView.updateListener.of(function(update){if(update.docChanged&&!switchingFile)emit("input");if(update.selectionSet||update.docChanged)emit("select");})
+    ]});
+  }
   function openFile(name) {
     if(files[name]==null) return;
-    rememberEditor();activeFile=name;
+    rememberEditor();editorStates[activeFile]=editorView.state;
+    activeFile=name;
     recentFiles=[name].concat(recentFiles.filter(function(item){return item!==name&&files[item]!=null;})).slice(0,5);
     try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
     if(!openFiles.includes(name))openFiles.push(name);
-    switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(name))});
-    editor.value=files[name];switchingFile=false;
+    switchingFile=true;
+    if(!editorStates[name])editorStates[name]=makeEditorState(name);
+    editorView.setState(editorStates[name]);
+    switchingFile=false;
     renderTabs();if(sideView!=="search")renderExplorer();updateCursor();editor.focus();
     document.getElementById("trim").disabled=false;
     output("Workspace","Opened "+name+".");
@@ -389,7 +404,7 @@
     if(files[name]!=null){say("A file with that name already exists.");return;}
     // Snapshot the active editor before removing the old key, or live edits can be lost.
     rememberEditor();
-    files[name]=files[oldName];delete files[oldName];if(dirty[oldName])dirty[name]=true;delete dirty[oldName];
+    files[name]=files[oldName];editorStates[oldName]=editorView.state;editorStates[name]=editorStates[oldName];delete editorStates[oldName];delete files[oldName];if(dirty[oldName])dirty[name]=true;delete dirty[oldName];
     recentFiles=recentFiles.map(function(item){return item===oldName?name:item;});
     try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
     openFiles=openFiles.map(function(n){return n===oldName?name:n;});if(activeFile===oldName)activeFile=name;
@@ -399,9 +414,11 @@
   function deleteFile(name) {
     if(["index.html","styles.css","app.js"].includes(name)){say("The three preview entry files are required.");return;}
     if(!confirm("Delete "+name+" from this browser workspace?"))return;
+    if(activeFile===name)editorStates[name]=editorView.state;
     delete files[name];delete dirty[name];openFiles=openFiles.filter(function(n){return n!==name;});
     recentFiles=recentFiles.filter(function(item){return item!==name;});try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
-    if(activeFile===name){activeFile="index.html";switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;}
+    if(activeFile===name){openFile("index.html");}
+    delete editorStates[name];
     var saved=persist(true);renderTabs();renderExplorer();updateCursor();
     say(saved?"Deleted "+name:"Deleted "+name+" in memory; storage failed, so export a backup before leaving.");
   }
@@ -435,8 +452,8 @@
       try {
         var next=Core.readWorkspace(String(reader.result));
         clearTimeout(saveTimer);clearTimeout(previewTimer);
-        files=next;dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";
-        switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
+        files=next;dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";editorStates=Object.create(null);
+        switchingFile=true;editorView.setState(makeEditorState(activeFile));editorStates[activeFile]=editorView.state;switchingFile=false;
         var saved=persist(true);
         if(!saved)Object.keys(files).forEach(function(name){dirty[name]=true;});
         renderTabs();if(sideView!=="search")renderExplorer();updateCursor();renderPreview(false);
@@ -468,6 +485,7 @@
     engineExtensions[4]=wrappingCompartment.of(savedWrap?Engine.EditorView.lineWrapping:[]);
   }catch(e){}
   editorView=new Engine.EditorView({parent:editorHost,doc:files[activeFile],extensions:engineExtensions});
+  editorStates[activeFile]=editorView.state;
   editor.setAttribute("aria-label","Code editor content");
   editorHost.addEventListener("keydown",function(event){emit("keydown",event);});
   setLayout(readLayout());renderTabs();renderExplorer();updateCursor();clearConsole();renderPreview(false);if(recoveryBackupRaw)say(recoveryBackupPreserved?"A raw recovery copy was preserved locally. Use the command palette to export it.":"The invalid workspace backup could not be preserved locally. Export the raw recovery copy immediately.");
@@ -494,8 +512,8 @@
     var template=TEMPLATES[name];if(!template)return;
     if(!confirm('Load the '+name+' template? This replaces all three preview files in your current local workspace.'))return;
     clearTimeout(saveTimer);clearTimeout(previewTimer);
-    files=Object.assign({},template);dirty=Object.create(null);openFiles=['index.html','styles.css','app.js'];activeFile='index.html';
-    switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
+    files=Object.assign({},template);dirty=Object.create(null);openFiles=['index.html','styles.css','app.js'];activeFile='index.html';editorStates=Object.create(null);
+    switchingFile=true;editorView.setState(makeEditorState(activeFile));editorStates[activeFile]=editorView.state;switchingFile=false;
     var saved=persist(true);if(!saved)Object.keys(files).forEach(function(fileName){dirty[fileName]=true;});
     renderTabs();renderExplorer();updateCursor();renderPreview(false);
     say(saved?name+' template loaded and saved on this device.':name+' template loaded in memory, but browser storage failed. Unsaved markers are retained; export a backup.');
@@ -583,8 +601,8 @@
   document.getElementById("reset").addEventListener("click",function(){
     if(!confirm("Restore the starter workspace? All local workspace files will be replaced."))return;
     clearTimeout(saveTimer);clearTimeout(previewTimer);
-    files=Object.assign({},START);dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";
-    switchingFile=true;editorView.dispatch({effects:languageCompartment.reconfigure(languageExtension(activeFile))});editor.value=files[activeFile];switchingFile=false;
+    files=Object.assign({},START);dirty=Object.create(null);openFiles=["index.html","styles.css","app.js"];activeFile="index.html";editorStates=Object.create(null);
+    switchingFile=true;editorView.setState(makeEditorState(activeFile));editorStates[activeFile]=editorView.state;switchingFile=false;
     var saved=persist(false);if(!saved)Object.keys(files).forEach(function(name){dirty[name]=true;});
     renderTabs();renderExplorer();updateCursor();renderPreview(false);
     say(saved?"Starter workspace restored":"Starter workspace restored in memory, but storage failed. Export a backup before leaving.");
@@ -609,7 +627,14 @@
     if(level==="error")document.getElementById("previewState").textContent="Runtime error";
     else if(level==="system")document.getElementById("previewState").textContent="Ready";
   });
-  window.addEventListener("beforeunload",function(){clearTimeout(saveTimer);rememberEditor();try{Core.writeWorkspace(localStorage,files);}catch(e){}});
+  window.addEventListener("beforeunload",function(event){
+    clearTimeout(saveTimer);rememberEditor();
+    var saved=persist(false);
+    if(saved){dirty=Object.create(null);}
+    if(!saved||Object.keys(dirty).some(function(name){return dirty[name];})){
+      event.preventDefault();event.returnValue="";
+    }
+  });
   var resizing=false,resizeRatio=.5,handle=document.getElementById("resizeHandle");
   function resizeAt(clientX){var rect=workspace.getBoundingClientRect(),ratio=(clientX-rect.left)/rect.width;ratio=Math.max(.25,Math.min(.75,ratio));resizeRatio=ratio;handle.setAttribute("aria-valuenow",String(Math.round(ratio*100)));workspace.style.gridTemplateColumns="minmax(0,"+(ratio*100)+"fr) 8px minmax(0,"+((1-ratio)*100)+"fr)";}
   handle.addEventListener("pointerdown",function(event){if(matchMedia("(max-width: 760px)").matches)return;resizing=true;var rect=workspace.getBoundingClientRect();resizeRatio=(event.clientX-rect.left)/rect.width;handle.setAttribute("aria-valuenow",String(Math.round(Math.max(.25,Math.min(.75,resizeRatio))*100)));handle.setPointerCapture(event.pointerId);event.preventDefault();});
