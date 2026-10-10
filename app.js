@@ -634,7 +634,7 @@
     function add(name,source,offset,message) {
       if(diagnostics.length>=200)return;
       offset=Math.max(0,Math.min(source.length,offset||0));
-      var prefix=source.slice(0,offset),line=prefix.split("\n").length,column=prefix.length-prefix.lastIndexOf("\\n");
+      var prefix=source.slice(0,offset),line=prefix.split("\n").length,column=prefix.length-prefix.lastIndexOf("\n");
       var key=name+":"+line+":"+column+":"+message;if(seen[key])return;seen[key]=true;
       diagnostics.push({file:name,line:line,column:column,from:offset,message:message});
     }
