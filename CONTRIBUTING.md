@@ -15,7 +15,7 @@ Requirements: Node.js 22 or newer and npm.
 ```sh
 git clone https://github.com/TEJAS-MK2/Code-Forge.git
 cd Code-Forge
-npm install --no-package-lock --no-fund
+npm ci --no-fund
 npm run build
 ```
 
