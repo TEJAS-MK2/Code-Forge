@@ -514,7 +514,12 @@
         }
       }
     });
-    switchingFile=true;editor.value=files[activeFile];switchingFile=false;editorStates[activeFile]=editorView.state;
+    switchingFile=true;
+    var activeDocument=files[activeFile];
+    if(editorView.state.doc.toString()!==activeDocument){
+      editorView.dispatch({changes:{from:0,to:editorView.state.doc.length,insert:activeDocument},annotations:[Engine.Transaction.userEvent.of("input"),Engine.Transaction.addToHistory.of(true)]});
+    }
+    switchingFile=false;editorStates[activeFile]=editorView.state;
     var saved=persist(true);
     if(saved)dirty=Object.create(null);
     else Object.keys(files).forEach(function(name){dirty[name]=true;});
