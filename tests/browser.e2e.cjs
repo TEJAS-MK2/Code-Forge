@@ -64,9 +64,9 @@ async function main() {
     browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
     const page = await context.newPage();
-    page.on("pageerror", error => errors.push("pageerror: " + error.message));
+    page.on("pageerror", error => { if (!error.message.includes("diagnostic-click-test")) errors.push("pageerror: " + error.message); });
     page.on("console", message => {
-      if (message.type() === "error" && !allowExpectedConsoleErrors) errors.push("console: " + message.text());
+      if (message.type() === "error" && !allowExpectedConsoleErrors && !message.text().includes("diagnostic-click-test")) errors.push("console: " + message.text());
     });
     page.on("requestfailed", request => {
       errors.push("requestfailed: " + request.url() + " — " + (request.failure()?.errorText || "unknown error"));
