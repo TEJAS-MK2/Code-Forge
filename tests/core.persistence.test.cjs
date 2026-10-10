@@ -109,7 +109,7 @@ test("ZIP export validates workspace input before creating an archive", () => {
 
  
 test("line diff identifies additions and removals and preserves context", () => {
-  const diff = Core.diffLines("alpha\\nbeta\\ngamma", "alpha\\nBETA\\ngamma\\ndelta");
+  const diff = Core.diffLines("alpha\nbeta\ngamma", "alpha\nBETA\ngamma\ndelta");
   assert.deepEqual(diff.map(line => line.type), ["context", "remove", "add", "context", "add"]);
   assert.equal(diff[1].text, "beta");
   assert.equal(diff[2].text, "BETA");
@@ -117,5 +117,5 @@ test("line diff identifies additions and removals and preserves context", () => 
 });
 
 test("line diff refuses oversized inputs instead of allocating unbounded memory", () => {
-  assert.throws(() => Core.diffLines(Array(601).fill("x").join("\\n"), "x"), /too large/i);
+  assert.throws(() => Core.diffLines(Array(601).fill("x").join("\n"), "x"), /too large/i);
 });
