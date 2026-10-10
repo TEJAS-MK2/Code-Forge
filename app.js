@@ -193,6 +193,7 @@
     snapshots=snapshots.slice(0,20);
     try { localStorage.setItem(snapshotKey(),JSON.stringify(snapshots));if(announce!==false)say("Snapshot saved in this browser.");return true; }
     catch(error) {
+      if(snapshots.length<2){say("Snapshot could not be saved. Browser storage may be full; export a backup.");return false;}
       try { snapshots.pop();localStorage.setItem(snapshotKey(),JSON.stringify(snapshots));say("Storage was tight; the oldest snapshot was removed to keep the latest snapshot.");return true; }
       catch(e){say("Snapshot could not be saved. Browser storage may be full; export a backup.");return false;}
     }
@@ -686,18 +687,20 @@
     var base=snapshots[0].files&&snapshots[0].files[activeFile]||"",current=editor.value,diff;
     try { diff=Core.diffLines(base,current); } catch(error) { say(error.message||"Could not compare this file.");return; }
     if(!diff.some(function(line){return line.type!=="context";})){say("No changes from the latest snapshot for "+activeFile+".");return;}
+    var returnFocus=document.activeElement;
     var old=document.getElementById("diffOverlay");if(old)old.remove();
     var overlay=document.createElement("div");overlay.id="diffOverlay";overlay.className="diff-overlay";
     var dialog=document.createElement("section");dialog.className="diff-dialog";dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");dialog.setAttribute("aria-labelledby","diffTitle");
     var heading=document.createElement("header");heading.className="diff-heading";
     var title=document.createElement("h2");title.id="diffTitle";title.textContent="Local diff · "+activeFile;
-    var close=document.createElement("button");close.type="button";close.className="button button-quiet";close.textContent="Close";close.setAttribute("aria-label","Close local diff");close.addEventListener("click",function(){overlay.remove();});
+    function closeDiff(){overlay.remove();if(returnFocus&&returnFocus.isConnected&&typeof returnFocus.focus==="function")returnFocus.focus();else editor.focus();}
+    var close=document.createElement("button");close.type="button";close.className="button button-quiet";close.textContent="Close";close.setAttribute("aria-label","Close local diff");close.addEventListener("click",closeDiff);
     heading.append(title,close);
     var body=document.createElement("div");body.className="diff-body";body.setAttribute("aria-label","Line-by-line changes");
     diff.forEach(function(item){var row=document.createElement("div");row.className="diff-line diff-"+item.type;var marker=item.type==="add"?"+":item.type==="remove"?"−":" ";var number=item.type==="remove"?item.oldLine:item.newLine||item.oldLine;row.textContent=marker+" "+String(number||"").padStart(4," ")+" "+item.text;body.append(row);});
     dialog.append(heading,body);overlay.append(dialog);document.body.append(overlay);
-    overlay.addEventListener("click",function(event){if(event.target===overlay)overlay.remove();});
-    overlay.addEventListener("keydown",function(event){if(event.key==="Escape")overlay.remove();});
+    overlay.addEventListener("click",function(event){if(event.target===overlay)closeDiff();});
+    overlay.addEventListener("keydown",function(event){if(event.key==="Escape")closeDiff();});
     close.focus();
   }
   function renderBottomPanel() {
