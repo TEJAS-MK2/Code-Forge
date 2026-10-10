@@ -7,6 +7,7 @@
 - Kept project data in browser-local storage; no backend, account or cloud sync was introduced.
 - Added Chromium coverage for an offline reload and CI checks for every published app-shell asset.
 - Added an accessible footer status cue for browser-reported online/offline state.
+- Added a conditional install action when the browser offers app installation.
 
 ## 2026-10-10 — Studio polish
 
