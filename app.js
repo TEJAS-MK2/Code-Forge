@@ -626,3 +626,14 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
+
+var networkState = document.getElementById("networkState");
+function updateNetworkState() {
+  if (!networkState) return;
+  var online = navigator.onLine;
+  networkState.textContent = online ? "Browser online" : "Browser offline";
+  networkState.dataset.network = online ? "online" : "offline";
+}
+window.addEventListener("online", updateNetworkState);
+window.addEventListener("offline", updateNetworkState);
+updateNetworkState();

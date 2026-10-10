@@ -18,7 +18,7 @@ No account, cloud authentication or application backend is required. Projects an
 - **Runtime console** with timestamps, error/warning counts, an errors-only filter and console history.
 - **Standalone HTML export** for sharing a self-contained version of the three preview entry files.
 - **Local static bundle**: CodeMirror is bundled for the published site; the app does not fetch editor packages from a runtime CDN.
-- **Installable offline shell**: after one successful visit, a service worker caches the editor assets so the app can reopen without a network connection. Projects remain in that browser profile; offline caching is not cloud sync or a substitute for exported backups.
+- **Installable offline shell**: after one successful visit, a service worker caches the editor assets so the app can reopen without a network connection. A small footer indicator reflects the browser's online/offline state; it is not an internet health check. Projects remain in that browser profile; offline caching is not cloud sync or a substitute for exported backups.
 
 ## Getting started
 

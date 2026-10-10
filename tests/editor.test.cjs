@@ -495,3 +495,15 @@ test("production build includes offline install metadata and service worker", ()
   for (const asset of ["sw.js", "manifest.webmanifest", "icon.svg"]) assert.ok(build.includes('"'+asset+'"'), asset);
   for (const asset of ["index.html", "styles.css", "core.js", "app.js", "editor.bundle.js", "manifest.webmanifest", "icon.svg"]) assert.ok(worker.includes('"./'+asset+'"'), asset);
 });
+
+ 
+test("network status indicator reflects browser connectivity", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(html, /id="networkState" class="network-state" role="status" aria-live="polite"/);
+  assert.match(app, /window\.addEventListener\("online", updateNetworkState\)/);
+  assert.match(app, /window\.addEventListener\("offline", updateNetworkState\)/);
+  assert.match(app, /navigator\.onLine/);
+  assert.match(styles, /\.network-state\[data-network="offline"\]::before/);
+});

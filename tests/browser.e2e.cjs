@@ -123,6 +123,8 @@ async function main() {
       await offlinePage.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 10000 });
       await offlineContext.setOffline(true);
       await offlinePage.reload({ waitUntil: "load", timeout: 20000 });
+      await offlinePage.waitForFunction(() => document.querySelector("#networkState")?.dataset.network === "offline", null, { timeout: 5000 });
+      assert.equal(await offlinePage.locator("#networkState").textContent(), "Browser offline");
       assert.equal(await offlinePage.title(), "Code Forge — Browser Editor");
       await offlinePage.locator("#editorHost .cm-editor").waitFor({ state: "visible", timeout: 10000 });
       assert.equal(await offlinePage.locator('#editorHost .cm-content[contenteditable="true"]').isVisible(), true);
