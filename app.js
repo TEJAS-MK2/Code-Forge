@@ -142,7 +142,7 @@
     if(action==="new") {
       if(projectRegistry.projects.length>=50){say("A maximum of 50 local projects is supported.");return;}
       var name=prompt("Name the new project (1–48 characters):","Untitled Project");if(!name)return;name=name.trim();
-      if(!name||name.length>48||/[\\u0000-\\u001f\\u007f]/.test(name)){say("Project names must contain 1–48 printable characters.");return;}
+      if(!name||name.length>48||/[\u0000-\u001f\u007f]/.test(name)){say("Project names must contain 1–48 printable characters.");return;}
       if(projectRegistry.projects.some(function(project){return project.name.toLowerCase()===name.toLowerCase();})){say("A project with that name already exists.");return;}
       var id="p-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);
       var raw=JSON.stringify({format:"code-forge-workspace",version:2,files:Object.assign({},START)});
@@ -154,7 +154,7 @@
     }
     if(action==="rename") {
       var renamed=prompt("Rename project:",current.name);if(!renamed)return;renamed=renamed.trim();
-      if(!renamed||renamed.length>48||/[\\u0000-\\u001f\\u007f]/.test(renamed)){say("Project names must contain 1–48 printable characters.");return;}
+      if(!renamed||renamed.length>48||/[\u0000-\u001f\u007f]/.test(renamed)){say("Project names must contain 1–48 printable characters.");return;}
       if(projectRegistry.projects.some(function(project){return project.id!==activeProjectId&&project.name.toLowerCase()===renamed.toLowerCase();})){say("A project with that name already exists.");return;}
       var previousName=current.name;current.name=renamed;
       if(saveProjectRegistry()){renderProjectSelector();say("Project renamed.");}else current.name=previousName;
