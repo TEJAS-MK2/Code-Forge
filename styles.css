@@ -628,3 +628,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .network-state[data-network="offline"]::before {
   background: #d6a56e;
 }
+
+.install-button[hidden] {
+  display: none;
+}

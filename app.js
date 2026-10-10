@@ -637,3 +637,42 @@ function updateNetworkState() {
 window.addEventListener("online", updateNetworkState);
 window.addEventListener("offline", updateNetworkState);
 updateNetworkState();
+
+
+// Show an install action only when the browser says installation is available.
+var installToastTimer = null;
+function notifyInstall(message) {
+  var toast = document.getElementById("toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(installToastTimer);
+  installToastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200);
+}
+var installButton = document.getElementById("installApp");
+var deferredInstallPrompt = null;
+if (installButton && window.matchMedia("(display-mode: standalone)").matches) installButton.hidden = true;
+window.addEventListener("beforeinstallprompt", function (event) {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (installButton) installButton.hidden = false;
+});
+if (installButton) {
+  installButton.addEventListener("click", async function () {
+    if (!deferredInstallPrompt) {
+      notifyInstall("Use your browser menu to install Code Forge.");
+      return;
+    }
+    var promptEvent = deferredInstallPrompt;
+    deferredInstallPrompt = null;
+    installButton.hidden = true;
+    await promptEvent.prompt();
+    var choice = await promptEvent.userChoice;
+    notifyInstall(choice && choice.outcome === "accepted" ? "Code Forge installed." : "Installation dismissed.");
+  });
+}
+window.addEventListener("appinstalled", function () {
+  deferredInstallPrompt = null;
+  if (installButton) installButton.hidden = true;
+  notifyInstall("Code Forge installed.");
+});

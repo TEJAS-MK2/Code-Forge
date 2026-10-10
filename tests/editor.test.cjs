@@ -507,3 +507,15 @@ test("network status indicator reflects browser connectivity", () => {
   assert.match(app, /navigator\.onLine/);
   assert.match(styles, /\.network-state\[data-network="offline"\]::before/);
 });
+
+ 
+test("install action is hidden until the browser offers installation", () => {
+  const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
+  const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+  const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(html, /id="installApp"[^>]*hidden/);
+  assert.match(app, /window\.addEventListener\("beforeinstallprompt"/);
+  assert.match(app, /promptEvent\.prompt\(\)/);
+  assert.match(app, /window\.addEventListener\("appinstalled"/);
+  assert.match(styles, /\.install-button\[hidden\]/);
+});
