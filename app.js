@@ -353,15 +353,21 @@
     var count=0;
     Object.keys(files).forEach(function(name){files[name].split("\n").forEach(function(line){var re=searchPattern(query,options);while(re.exec(line)!==null)count++;});});
     if(!count){say("No matches to replace.");return;}
-    if(!confirm("Replace "+count+" occurrence"+(count===1?"":"s")+" across all workspace files? This cannot be undone."))return;
+    if(!confirm("Replace "+count+" occurrence"+(count===1?"":"s")+" across all workspace files? You can undo the replacement in each file after opening it."))return;
     Object.keys(files).forEach(function(name){
       files[name]=files[name].split("\n").map(function(line){
         var re=searchPattern(query,options);
         if(options.wholeWord)return line.replace(re,function(full,prefix){return (prefix||"")+replacement;});
         return line.replace(re,function(){return replacement;});
       }).join("\n");
+      if(name!==activeFile&&editorStates[name]){
+        var previousState=editorStates[name],nextDocument=files[name];
+        if(previousState.doc.toString()!==nextDocument){
+          editorStates[name]=previousState.update({changes:{from:0,to:previousState.doc.length,insert:nextDocument}}).state;
+        }
+      }
     });
-    switchingFile=true;editor.value=files[activeFile];switchingFile=false;
+    switchingFile=true;editor.value=files[activeFile];switchingFile=false;editorStates[activeFile]=editorView.state;
     var saved=persist(true);
     if(saved)dirty=Object.create(null);
     else Object.keys(files).forEach(function(name){dirty[name]=true;});
@@ -404,7 +410,7 @@
     if(files[name]!=null){say("A file with that name already exists.");return;}
     // Snapshot the active editor before removing the old key, or live edits can be lost.
     rememberEditor();
-    files[name]=files[oldName];editorStates[oldName]=editorView.state;editorStates[name]=editorStates[oldName];delete editorStates[oldName];delete files[oldName];if(dirty[oldName])dirty[name]=true;delete dirty[oldName];
+    files[name]=files[oldName];if(activeFile===oldName)editorStates[oldName]=editorView.state;editorStates[name]=editorStates[oldName];delete editorStates[oldName];delete files[oldName];if(dirty[oldName])dirty[name]=true;delete dirty[oldName];
     recentFiles=recentFiles.map(function(item){return item===oldName?name:item;});
     try{localStorage.setItem("code-forge-recent-files",JSON.stringify(recentFiles));}catch(e){}
     openFiles=openFiles.map(function(n){return n===oldName?name:n;});if(activeFile===oldName)activeFile=name;
