@@ -27,8 +27,16 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
-      - name: Install build and test dependencies
-        run: npm install --no-fund
+      - name: Generate a real npm lockfile for reproducible install
+        run: npm install --package-lock-only --ignore-scripts --no-fund
+      - name: Export generated lockfile for repository commit
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: code-forge-package-lock
+          path: package-lock.json
+          retention-days: 1
+      - name: Install locked build and test dependencies
+        run: npm ci --no-fund
       - name: Fail on high or critical dependency vulnerabilities
         run: npm audit --audit-level=high
       - name: Verify required application, test and community files
